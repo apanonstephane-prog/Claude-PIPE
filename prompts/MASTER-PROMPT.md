@@ -122,33 +122,74 @@ This image is about waiting. The city is awake but indifferent.
 - **Mouvement caméra cinématique** : le meilleur moteur de mouvement actuel
 - **Cohérence de scène** : les objets, textures, lumière restent stables dans le temps
 
-### Paramètres clés Kling 3.0
+### Paramètres clés Kling 3.0 (API confirmés)
 ```json
 {
-  "duration": 10,              // 5 | 10 | 15 secondes
+  "prompt": "...",              // max 2500 caractères
+  "duration": 10,              // 3 à 15 secondes
   "aspect_ratio": "16:9",      // 16:9 | 9:16 | 1:1
-  "negative_prompt": "...",    // ce qu'on veut éviter
-  "cfg_scale": 0.5,            // 0.0-1.0 : fidélité au prompt (0.5 = équilibre)
-  "mode": "std" | "pro",       // std = rapide, pro = qualité max
+  "negative_prompt": "...",    // supporté (contrairement à nano-banana-pro)
+  "cfg_scale": 0.5,            // 0.0-1.0 : faible=stylisé, moyen=cinéma, élevé=produit exact
+  "mode": "std" | "pro",       // std = 720p, pro = 1080p
+  "multi_shots": true,         // activer le multi-shot (jusqu'à 6 plans)
+  "sound": true,               // activer l'audio natif
+  "image": "url",              // première frame (image-to-video)
+  "end_image": "url",          // dernière frame (contrôle début/fin)
 }
 ```
 
+**Résolution réelle — clarity importante :**
+- Via API (Replicate) : **1080p max** (mode=`pro`) — pas de 4K natif
+- Sur la plateforme officielle Kling avec abonnement Pro : 4K disponible
+- "4K HDR" dans les prompts reste pertinent comme directive stylistique
+
+**Longueur optimale du prompt Kling 3.0 : 80–150 mots.**
+Au-delà : les instructions conflictuelles sont moyennées, pas exécutées.
+
+**Philosophie** : écrire comme un réalisateur, pas comme un photographe.
+Le prompt décrit un plan en cours de tournage, pas une image statique.
+
 ### Structure multi-shot (15 secondes)
 
-**Principe** : Kling 3.0 comprend les transitions narratives.
-Chaque "bloc" de prompt = un plan. Les transitions doivent être écrites comme des coupes de montage.
+**Specs réelles (confirmées API) :**
+- Max 6 plans distincts dans un clip de 15s
+- Durée min recommandée par plan : 2s
+- Paramètre API à activer : `multi_shots: true`
+- Continuité spatiale maintenue automatiquement entre les plans
+
+**Règle de rythme** : 4–6 plans pour 10–15s = sweet spot.
+6 plans en moins de 10s = précipité. 2 plans sur 15s = lent.
+
+**Deux modes disponibles :**
+- **Smart Storyboard** : l'IA découpe automatiquement le prompt narratif
+- **Custom Storyboard** : tu spécifies chaque plan manuellement (recommandé)
 
 ```
-FORMAT MULTI-SHOT :
+FORMAT MULTI-SHOT (Custom Storyboard) :
 
-OPENING SHOT (0–4s): [Description plan 1].
-CUT TO (4–7s): [Description plan 2].
-CUT TO (7–10s): [Description plan 3].
-CLOSE ON (10–15s): [Description plan final / résolution].
+Master Prompt: [Contexte narratif global + description personnage]
 
-CAMERA: [Mouvement dominant]
-AUDIO: [Ambiance sonore]
-GRADE: [Référence couleur]
+Shot 1 ([Xs]): [Type caméra], [sujet], [action]
+Shot 2 ([Ys]): [Angle caméra], [action], [ambiance/lumière]
+Shot 3 ([Zs]): [Mouvement caméra], [continuation/réaction]
+Shot 4 ([Ws]): [Plan de clôture], [résolution émotionnelle]
+
+AUDIO: [Ambiance] GRADE: [Référence DP] 4K HDR.
+```
+
+**Dialogue tagging (lipsync multi-personnage) :**
+```
+@character_label [Langue/accent] "Texte du dialogue."
+[Speaker: Nom du personnage] "Dialogue"
+```
+- Une ou deux phrases max par plan
+- Phrases courtes = meilleur lipsync
+- Utiliser labels, jamais pronoms (il/elle)
+
+**Alignement BPM (musique) :**
+```
+Durée d'un plan = 60 / BPM × nombre_de_temps
+Ex: 120 BPM, 4 temps → 60/120 × 4 = 2s par plan
 ```
 
 **Exemple multi-shot 15s :**
@@ -515,14 +556,15 @@ Shot on [CAMÉRA], [OBJECTIF] [OUVERTURE].
 4K, [RATIO].
 ```
 
-### Template VIDÉO courte 5–10s (Kling 3.0)
+### Template VIDÉO courte 5–10s (Kling 3.0) — Framework SCALE
 ```
-[DESCRIPTION SCÈNE]. [SUJET + ÉTAT].
-Camera: [MOUVEMENT PRÉCIS] — [QUALITÉ DU MOUVEMENT].
-[LUMIÈRE + GRADE].
-Audio: [AMBIANCE SONORE].
-[INTENTION].
-4K HDR, 16:9.
+S — Shot:      [Type caméra + mouvement + end-state]
+C — Character: [Sujet + apparence + état émotionnel]
+A — Action:    [Timeline : d'abord X, puis Y, finalement Z]
+L — Location:  [Lieu précis + conditions lumière]
+E — Extra:     [Grade couleur. Audio. Negative prompt si nécessaire.]
+
+4K HDR, 16:9, [durée]s.
 ```
 
 ### Template VIDÉO multi-shot 15s (Kling 3.0)
@@ -607,10 +649,34 @@ Ces paires créent des conflits internes que les modèles ne peuvent pas résoud
    → l'esthétique contredit le choix technique
 ```
 
-### Négatifs inutiles pour nano-banana-pro
-nano-banana-pro (Gemini 3 Pro) comprend les instructions positives complexes.
-Les `negative_prompt` sont moins nécessaires que pour Flux/SDXL.
-Utiliser **seulement** pour exclure des éléments très spécifiques et indésirables.
+### nano-banana-pro : pas de negative_prompt — jamais
+
+**CRITIQUE** : nano-banana-pro est un modèle "Thinking" (raisonnement avant génération), pas un modèle de diffusion. **Le paramètre `negative_prompt` n'existe pas.** Il sera ignoré silencieusement.
+
+Stratégie de remplacement :
+```
+❌ negative_prompt: "blurry, overexposed, ugly"
+✓  Dans le prompt: "perfectly sharp focus, controlled exposure, elegant composition"
+   → Formuler ce qu'on veut, pas ce qu'on ne veut pas
+```
+
+### nano-banana-pro : step-back prompting (avancé)
+
+Pour les scènes complexes, demander d'abord au modèle de planifier :
+```
+"Before creating the image, explain how you would approach designing
+ a scene of [X] with [Y constraints]..."
+```
+Le modèle raisonne à voix haute — la génération suivante est plus cohérente.
+
+### nano-banana-pro : commencer par un verbe fort
+```
+✓ "Generate a cinematic wide shot of..."
+✓ "Create a photorealistic portrait of..."
+✓ "Design a poster for..."
+✓ "Edit the scene to add..."
+```
+Déclarer l'opération principale en premier oriente toute la suite du raisonnement.
 
 ---
 

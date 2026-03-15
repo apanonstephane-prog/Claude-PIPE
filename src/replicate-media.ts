@@ -64,6 +64,10 @@ export interface VideoRequest {
   context?: GenerationContext;
   /** Passer un MasterPromptOptions pour construire un prompt Kling 3.0 optimal */
   masterPrompt?: MasterPromptOptions;
+  /** Kling 3.0 : première frame en image-to-video */
+  imageUrl?: string;
+  /** Kling 3.0 Omni : image de référence pour cohérence personnage/style */
+  referenceImageUrl?: string;
 }
 
 export interface MediaResult {
@@ -93,7 +97,7 @@ const VIDEO_MODELS: Record<VideoModel, string> = {
   "kling-v2.1": "kwaivgi/kling-v2.1",
   "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
   "kling-3.0": "kwaivgi/kling-v3-video",           // V3 — cinéma prompt-driven, 15s max
-  "kling-3.0-omni": "kwaivgi/kling-video-3-omni",  // O3 — audio natif + Elements, 30s max
+  "kling-3.0-omni": "kwaivgi/kling-v3-omni-video", // O3 — audio natif + Elements, 15s API (30s platform)
   "kling-v3-motion": "kwaivgi/kling-v3-motion-control",
 };
 
@@ -224,6 +228,9 @@ export class ReplicateMediaPipeline {
 
     const characterOrientation = isKlingOmni && mp?.elements?.[0]?.characterOrientation;
 
+    // multi_shots activé automatiquement si le masterPrompt contient des shots
+    const hasMultiShots = isKling3 && mp?.shots && mp.shots.length > 1;
+
     const input: Record<string, unknown> = {
       prompt: enriched,
       duration,
@@ -231,8 +238,11 @@ export class ReplicateMediaPipeline {
         ? {
             aspect_ratio: mp?.ratio ?? "16:9",
             mode: "pro",
+            multi_shots: hasMultiShots ?? false,
+            sound: mp?.generateAudio ?? false,
+            ...(request.imageUrl && { image: request.imageUrl }),
             ...(isKlingOmni && {
-              generate_audio: mp?.generateAudio ?? true,
+              ...(request.referenceImageUrl && { reference_image: request.referenceImageUrl }),
               ...(elementImages && { elements: elementImages }),
               ...(characterOrientation && { character_orientation: characterOrientation }),
             }),
