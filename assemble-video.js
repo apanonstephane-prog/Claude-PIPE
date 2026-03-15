@@ -78,13 +78,10 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
 
     const clip = {
       asset: isVideo
-        ? { type: "video", src: url }
+        ? { type: "video", src: url, volume: 0 }
         : { type: "image", src: url },
       start,
       length: clipDuration,
-      // volume: 0 au niveau clip (pas asset) pour muter l'audio des vidéos Kling
-      ...(isVideo && { volume: 0 }),
-      // fit: "crop" pour vidéos, effet Ken Burns pour images
       fit: isVideo ? "crop" : undefined,
       transition: { in: transition, out: transition },
     };
