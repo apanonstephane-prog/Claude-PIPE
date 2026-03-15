@@ -78,29 +78,23 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
 
     const clip = {
       asset: isVideo
-        ? {
-            type: "video",
-            src: url,
-            volume: 0,
-            trim: 0,
-          }
-        : {
-            type: "image",
-            src: url,
-          },
+        ? { type: "video", src: url }
+        : { type: "image", src: url },
       start,
       length: clipDuration,
-      fit: "cover",
-      transition: {
-        in: transition,
-        out: transition,
-      },
+      // volume: 0 au niveau clip (pas asset) pour muter l'audio des vidéos Kling
+      ...(isVideo && { volume: 0 }),
+      // fit: "crop" pour vidéos, effet Ken Burns pour images
+      fit: isVideo ? "crop" : undefined,
+      transition: { in: transition, out: transition },
     };
 
-    // Ken Burns uniquement pour les images statiques
     if (!isVideo) {
       clip.effect = kenBurnsEffects[i % kenBurnsEffects.length];
     }
+
+    // Nettoyer les undefined
+    Object.keys(clip).forEach((k) => clip[k] === undefined && delete clip[k]);
 
     return clip;
   });
@@ -266,9 +260,11 @@ async function main() {
   // ── Build payload ──────────────────────────────────────────────────────────
   const payload = buildPayload(mediaUrls, shotstackConfig, mediaType);
 
-  // ── Debug payload (sans les URLs complètes) ────────────────────────────────
+  // ── Debug payload complet ─────────────────────────────────────────────────
   const totalClips = payload.timeline.tracks.reduce((acc, t) => acc + t.clips.length, 0);
   console.log(`  Payload: ${payload.timeline.tracks.length} tracks, ${totalClips} clips total`);
+  console.log("  Payload JSON (debug):");
+  console.log(JSON.stringify(payload, null, 2));
 
   // ── Soumettre le render ────────────────────────────────────────────────────
   const renderId = await submitRender(payload, apiKey, env);

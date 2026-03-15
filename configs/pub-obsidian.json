@@ -61,7 +61,7 @@
     "transition": "fadeSlow",
     "resolution": "hd",
     "fps": 25,
-    "soundtrack": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/unminus/ambisax.mp3",
+    "soundtrack": "https://shotstack-assets.s3-ap-southeast-2.amazonaws.com/music/unminus/noir.mp3",
     "soundtrackVolume": 0.55,
     "textOverlays": [
       {
