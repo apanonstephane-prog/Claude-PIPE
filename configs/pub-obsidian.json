@@ -1,0 +1,41 @@
+{
+  "outputDir": "output",
+  "requests": [
+    {
+      "type": "image",
+      "prompt": "A single dramatic beam of light piercing pure darkness, a professional cinema camera silhouette emerging from shadows, obsidian black stone texture background, ultra cinematic 4K, social media ad frame",
+      "model": "flux-schnell",
+      "style": "cinematic",
+      "width": 1080,
+      "height": 1920,
+      "numOutputs": 1
+    },
+    {
+      "type": "image",
+      "prompt": "Close-up of a film director hands holding a clapperboard on a dark cinematic set, dramatic side lighting, shallow depth of field, black and deep amber tones, professional film production, vertical format",
+      "model": "flux-schnell",
+      "style": "cinematic",
+      "width": 1080,
+      "height": 1920,
+      "numOutputs": 1
+    },
+    {
+      "type": "image",
+      "prompt": "Shards of black obsidian stone exploding and transforming into cinema film strips, iridescent light reflections on black mineral surface, epic cinematic composition, dark background, vertical social media format",
+      "model": "flux-dev",
+      "style": "cinematic",
+      "width": 1080,
+      "height": 1920,
+      "numOutputs": 1
+    },
+    {
+      "type": "image",
+      "prompt": "Minimalist premium black background with elegant gold text OBSIDIAN ARTS FILMS STUDIO, subtle obsidian stone texture, tagline Chaque histoire merite d etre vue in small gold italic font, luxury cinema brand identity, vertical format",
+      "model": "nano-banana-2",
+      "style": "logo",
+      "width": 1080,
+      "height": 1920,
+      "numOutputs": 1
+    }
+  ]
+}

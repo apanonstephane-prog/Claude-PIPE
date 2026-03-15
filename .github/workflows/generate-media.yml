@@ -1,0 +1,107 @@
+name: Generate Media (Replicate)
+
+on:
+  # Déclenchement manuel avec paramètres
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Prompt de génération"
+        required: false
+        default: ""
+      type:
+        description: "Type de média"
+        required: false
+        default: "image"
+        type: choice
+        options: [image, video]
+      model:
+        description: "Modèle à utiliser"
+        required: false
+        default: "flux-schnell"
+        type: choice
+        options:
+          - flux-schnell
+          - flux-dev
+          - sdxl
+          - nano-banana-pro
+          - nano-banana-2
+          - ltx-video
+          - kling-v2.1
+          - kling-v2.1-pro
+          - kling-3.0
+      style:
+        description: "Style visuel"
+        required: false
+        default: "cinematic"
+        type: choice
+        options:
+          - cinematic
+          - photorealistic
+          - documentary
+          - abstract
+          - poster
+          - illustration
+          - logo
+      config:
+        description: "Fichier de config batch (ex: pub-obsidian.json) — ignoré si prompt est renseigné"
+        required: false
+        default: ""
+
+  # Déclenchement automatique quand un fichier .json de config est pushé
+  push:
+    paths:
+      - "configs/*.json"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate media (prompt direct)
+        if: ${{ github.event.inputs.prompt != '' }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          node generate-images.js \
+            --prompt "${{ github.event.inputs.prompt }}" \
+            --type "${{ github.event.inputs.type }}" \
+            --model "${{ github.event.inputs.model }}" \
+            --style "${{ github.event.inputs.style }}" \
+            --output output
+
+      - name: Generate media (fichier config)
+        if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config != '' }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          node generate-images.js --config "configs/${{ github.event.inputs.config }}"
+
+      - name: Generate media (config pushée automatiquement)
+        if: ${{ github.event_name == 'push' }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          for f in configs/*.json; do
+            echo "Traitement de $f..."
+            node generate-images.js --config "$f"
+          done
+
+      - name: Upload artefacts générés
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: media-generated-${{ github.run_number }}
+          path: output/
+          retention-days: 30
