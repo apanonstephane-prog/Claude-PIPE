@@ -67,8 +67,9 @@ npm run dev
 
 ## Models available
 
-**Images:** `flux-schnell` (default, fast), `flux-dev` (quality), `sdxl`
-**Videos:** `ltx-video` (default), `video-01`
+**Images:** `flux-schnell` (default, fast), `flux-dev` (quality), `sdxl`, `nano-banana-pro` (Gemini 3 Pro — text rendering + 4K editing), `nano-banana-2` (Gemini 3.1 Flash — fast + 4K)
+
+**Videos:** `ltx-video` (default), `video-01`, `kling-v2.1` (image-to-video 1080p), `kling-v2.1-pro` (high quality), `kling-3.0` (4K HDR, native audio)
 
 ## Styles
 
@@ -84,7 +85,7 @@ Style is **auto-detected** from project/conversation context if not specified.
 - When generating media for a project, run `generate-images.js` from this repo, not from the project repo.
 - Store outputs in `./output/` (git-ignored).
 - The `REPLICATE_API_TOKEN` must always come from `.env` or GitHub Secrets — never hardcode it.
-- Prefer `flux-schnell` for speed and `flux-dev` for quality. Use `ltx-video` for videos by default.
+- Prefer `flux-schnell` for speed, `flux-dev` for quality, `nano-banana-2` for text-in-image or 4K. Use `ltx-video` for videos by default, `kling-3.0` for cinematic 4K HDR.
 - When the user asks for images/videos related to a project, pass `context.projectName` and `context.keywords` to enable automatic style detection.
 
 ---

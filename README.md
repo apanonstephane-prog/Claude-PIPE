@@ -97,13 +97,25 @@ const video = await pipe.generateVideo({
 
 ## Models
 
-| Type  | Key           | Replicate model                  | Notes            |
-|-------|---------------|----------------------------------|------------------|
-| Image | `flux-schnell`| `black-forest-labs/flux-schnell` | Default, fastest |
-| Image | `flux-dev`    | `black-forest-labs/flux-dev`     | Higher quality   |
-| Image | `sdxl`        | `stability-ai/sdxl`              | Classic SDXL     |
-| Video | `ltx-video`   | `lightricks/ltx-video`           | Default video    |
-| Video | `video-01`    | `minimax/video-01`               | Alternative      |
+### Images
+
+| Clé              | Replicate model                  | Notes                            |
+|------------------|----------------------------------|----------------------------------|
+| `flux-schnell`   | `black-forest-labs/flux-schnell` | Défaut — rapide                  |
+| `flux-dev`       | `black-forest-labs/flux-dev`     | Haute qualité                    |
+| `sdxl`           | `stability-ai/sdxl`              | Classic SDXL                     |
+| `nano-banana-pro`| `google/nano-banana-pro`         | Gemini 3 Pro — texte, édition 4K |
+| `nano-banana-2`  | `google/nano-banana-2`           | Gemini 3.1 Flash — rapide + 4K   |
+
+### Vidéos
+
+| Clé             | Replicate model          | Notes                                  |
+|-----------------|--------------------------|----------------------------------------|
+| `ltx-video`     | `lightricks/ltx-video`   | Défaut vidéo                           |
+| `video-01`      | `minimax/video-01`       | Alternatif                             |
+| `kling-v2.1`    | `kwaivgi/kling-v2.1`     | Kling AI — image-to-video 1080p        |
+| `kling-v2.1-pro`| `kwaivgi/kling-v2.1-pro` | Kling — haute qualité, prompt fidèle   |
+| `kling-3.0`     | `kwaivgi/kling-3.0`      | Kling Omni — 4K HDR, audio natif       |
 
 ## Styles
 

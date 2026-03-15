@@ -23,11 +23,18 @@ const IMAGE_MODELS = {
   "flux-schnell": "black-forest-labs/flux-schnell",
   "flux-dev": "black-forest-labs/flux-dev",
   sdxl: "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e0ccecb3c9816de99b8191625",
+  // Google DeepMind — Gemini Image models
+  "nano-banana-pro": "google/nano-banana-pro",
+  "nano-banana-2": "google/nano-banana-2",
 };
 
 const VIDEO_MODELS = {
   "ltx-video": "lightricks/ltx-video",
   "video-01": "minimax/video-01",
+  // Kling AI (Kuaishou) — video generation
+  "kling-v2.1": "kwaivgi/kling-v2.1",
+  "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
+  "kling-3.0": "kwaivgi/kling-3.0",
 };
 
 const STYLE_MODIFIERS = {
