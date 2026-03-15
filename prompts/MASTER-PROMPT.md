@@ -175,6 +175,23 @@ GRADE: Hoyte van Hoytema — Dunkirk. Cold steel blue, warm emerging gold.
 4K HDR, 16:9.
 ```
 
+### Principe end-state caméra — la règle la plus importante pour Kling 3.0
+
+> Décrire **où la caméra arrive**, pas ce qu'elle fait.
+
+```
+❌ "camera moves toward the face"
+✓  "camera arrives at medium close-up on face"
+
+❌ "dolly in slowly"
+✓  "slow dolly-in arriving at tight over-the-shoulder"
+
+❌ "crane down"
+✓  "crane down to eye level, arriving just as subject looks up"
+```
+
+**Pourquoi** : le modèle vidéo génère frame-par-frame. L'end-state lui donne la cible à atteindre. Le mouvement est déduit. Sans end-state, le mouvement s'arrête arbitrairement.
+
 ### Mots-clés mouvement caméra Kling 3.0
 
 ```
@@ -261,40 +278,63 @@ Qualité :
 
 ### Géométrie sacrée appliquée au cadrage
 
+**Trois systèmes — du plus connu au plus fin**
+
+| Système | Division | Force | Usage |
+|---------|----------|-------|-------|
+| Règle des tiers | 3 parts égales (0.333) | Baseline, tous les modèles la connaissent | Point de départ |
+| Phi Grid | Rapport doré (0.618/0.382) | Intersections plus vers le centre, plus naturelles | Portraits, sujets humains |
+| Dynamic Symmetry | Diagonales root-rectangle (√2, √3, √5, φ) | Énergie directionnelle, tension narrative | Plans cinéma, action |
+
 **Phi Grid (≠ règle des tiers)**
-La règle des tiers divise en 3 parts égales (0.333).
-Le phi grid divise selon le nombre d'or (0.618 / 0.382).
-Les intersections phi sont légèrement décalées vers le centre — plus naturelles à l'œil.
+Les intersections phi sont légèrement décalées vers le centre — plus d'espace environnemental, sujet mieux ancré.
 
 ```
-Usage en prompt :
-  "phi grid: subject at lower-right intersection"
-  "golden ratio framing: face at 0.618 from left edge"
-  "Fibonacci spiral: eye-line follows the curve from lower-left"
+"phi grid: subject at lower-right intersection"
+"golden ratio framing: face at 0.618 from left edge"
+"divine proportion framing, harmonic armature"
 ```
 
 **Spirale de Fibonacci**
 L'œil suit naturellement la spirale logarithmique.
-Placer le sujet au centre de la spirale, les éléments secondaires sur ses bras.
+Sujet au centre de la spirale, éléments secondaires sur ses bras extérieurs.
 
 ```
-Usage :
-  "Fibonacci spiral composition: the subject at the eye of the curve,
-   leading lines spiral outward through foreground elements"
+"Fibonacci spiral composition: the subject at the eye of the curve,
+ leading lines spiral outward through foreground elements"
+"logarithmic spiral subject placement"
+```
+
+**Diagonales de Dynamic Symmetry — l'énergie directionnelle**
+
+> C'est ce que les grands DP utilisent sans le nommer explicitement.
+
+- **Diagonale baroque** (bas-gauche → haut-droit) : direction naturelle de lecture, mouvement en avant, optimisme, progression
+- **Diagonale sinistre** (haut-gauche → bas-droit) : contre-courant, descente, malaise, menace
+
+```
+Plan de héros qui avance : "baroque diagonal composition — subject moving
+ from lower-left to upper-right, sense of forward momentum"
+
+Plan de chute/tension : "sinister diagonal — compositional descent
+ from upper-left to lower-right, implicit unease"
+
+Tension maximale : "reciprocal diagonal tension — two competing diagonals
+ creating visual conflict at center intersection"
 ```
 
 **Nombre d'or en proportion**
 - Cadres dans le cadre : 0.618 de la largeur totale
-- Horizon : jamais au milieu, rarement au tiers, idéalement à 0.382 ou 0.618 du haut
-- Sujets humains : tête à 0.618 du haut du cadre dans un portrait
+- Horizon : idéalement à 0.382 ou 0.618 du haut (jamais au milieu)
+- Sujets humains : tête à 0.618 du haut dans un portrait
 
 ### Cybernétique visuelle et perception
 
 **Hiérarchie perceptuelle (Gestalt)**
 L'œil lit dans cet ordre :
-1. Contraste (clair/sombre)
-2. Saturation (couleur vive)
-3. Mouvement / netteté (sharpness)
+1. Contraste lumineux (clair/sombre)
+2. Saturation (couleur vive dans champ neutre)
+3. Netteté / mouvement
 4. Forme reconnaissable (visage > corps > objet)
 5. Texte
 
@@ -305,19 +345,29 @@ En prompt : construire cette hiérarchie explicitement.
  foreground texture as tertiary (sharp but dark)"
 ```
 
-**Flux optique et attention**
-Les lignes convergentes guident l'œil vers un point focal.
-La profondeur de champ crée une hiérarchie d'attention.
-Le mouvement oriente le regard.
+**Circuit visuel fermé (Wiener / cybernétique)**
+Une composition réussie crée une boucle de feedback : l'œil entre par le point de plus haute saillance, suit les lignes de continuité, atteint les points focaux secondaires, et *revient* au point d'entrée. Une composition ratée laisse l'œil sortir du cadre sans retour.
 
+Encoder un circuit fermé :
+```
+"Foreground figure as entry point — leading line across midground —
+ horizon as terminus — atmospheric haze drawing gaze back to foreground"
+
+"Eye enters on bright highlight top-right, follows diagonal down to face,
+ leading line of arm points to background detail, soft vignette returns attention"
+```
+
+**Flux optique et attention**
 ```
 "Leading lines: train tracks converge to vanishing point where subject stands"
-"Depth of field as attention: subject in focus, everything else falling off"
-"Motion vector: the crowd moves left, the protagonist moves right — visual tension"
+"Depth of field as attention director: subject sharp, world falling off"
+"Motion vector: crowd moves left, protagonist moves right — visual tension"
+"Smooth laminar flow — coherent directional motion across frame"
+"Radial outward expansion from center subject"
 ```
 
 **Loi de Prägnanz** : l'œil cherche la forme la plus simple.
-Éviter le bruit visuel autour du sujet principal.
+Éviter le bruit visuel autour du sujet principal. "Single focal point, clean figure-ground separation."
 
 ### Fluidité du mouvement (pour Kling 3.0)
 
@@ -347,12 +397,23 @@ Le mouvement oriente le regard.
 Mais un grade de cinéma à 300M fait quelque chose de plus fin :
 
 ```
-Grade cinéma professionnel :
-  Shadows → lift vers dark green-brown (pas pur noir, pas teal vif)
-  Midtones → légèrement chauds pour les peaux (2800-3200K effectif)
-  Highlights → roll-off vers cream/gold (jamais clipper, jamais blanc pur)
-  Saturation → sélective : peaux saturées, ciel/béton désaturé
-  Contrast → S-curve douce : plus de détail dans les ombres et hautes lumières
+Grade cinéma professionnel — architecture en 5 points :
+
+  1. Shadow lift : blacks levés vers dark chocolate-brown (jamais teal pur)
+                   → "lifted blacks", "matte black aesthetic", "detail retained in shadow"
+
+  2. Highlight roll-off : compression vers cream/gold (jamais clipper)
+                          → "soft highlight roll-off", "Kodak 2383 print look",
+                             "creamy highlight transition", "no blown highlights"
+
+  3. Skin tone protection : canal orange calibré sur fréquence peau (≈ 20° hue)
+                            → "natural skin tones preserved", "warm golden skin frequency"
+
+  4. Saturation sélective : midtones saturés, ombres/hautes lumières désaturées
+                            → jamais boost uniforme
+
+  5. Contrast en log-space : roll-off organique
+                             → "log-curve contrast", "photochemical emulation"
 
 Références précises :
   Blade Runner 2049 (Deakins)
@@ -374,6 +435,12 @@ Références précises :
     → désaturation poussée : presque monochrome sauf quelques accents
     → halos sur les lumières (T2.0 wide open)
     → isolation : tout pour forcer l'intériorité
+
+  Mad Max: Fury Road (John Seale / Eric Whipp grade)
+    → saturation roman graphique : primaires riches, pas de bleach bypass
+    → surexposition 2 stops reprise au grade : texture préservée dans les hautes lumières
+    → cobalt profond vs ambre désert — contraste maximal ciel/sol
+    → peaux neutres sur fond saturé (inverse du Deakins)
 ```
 
 **En prompt :**
@@ -479,32 +546,71 @@ The text must be legible, [TAILLE RELATIVE], [COULEUR DU TEXTE] on [FOND].
 
 ## VII. ANTI-PATTERNS — CE QUI CASSE LES PROMPTS
 
-### Sur-spécification
-```
-❌ "extremely detailed, hyper-realistic, ultra-sharp, 8K, 16K, perfect,
-    stunning, breathtaking, award-winning, masterpiece"
-    → Mots vides. Le modèle les ignore ou les traite comme du bruit.
+### Minimum Effective Dose — la table de référence
 
-✓ "Kodak Vision3 250D, 4K" — précis, technique, actionnable
+> Au-delà des seuils ci-dessous = entropie. Les attracteurs sémantiques se battent.
+
+| Paramètre | Dose minimale efficace | Seuil de sur-spécification |
+|-----------|------------------------|---------------------------|
+| Composition | 1 système + 1 point focal | Plus de 2 systèmes simultanés |
+| Color grade | 1 référence film + 2 termes techniques | Plus de 3 directives couleur |
+| Mouvement | 1 qualité Laban + 1 mouvement caméra | Plus de 2 mouvements simultanés |
+| Atmosphère | 1 condition lumière + 1 élément atmosphérique | Plus de 3 effets simultanés |
+| Référence style | 1 film ou DP | Plus de 2 références nommées |
+
+**Corollaire** : quand tu nommes correctement une référence, tu as le package entier implicitement.
+`"Roger Deakins lighting"` → sources pratiques, lumière en mouvement, clair-obscur, registre d'exposition bas.
+Pas besoin d'énumérer. Ajoute seulement les **déviations** par rapport à la référence.
+
+### Entropy Kill List — combinaisons interdites
+
+Ces paires créent des conflits internes que les modèles ne peuvent pas résoudre :
+
+```
+❌ "cinematic ARRI Alexa" + "hyperrealistic 8K ultra-sharp"
+   → log-based organique vs clinique digital — ils se combattent
+
+❌ "minimalist composition" + plus de 4 éléments décrits dans le même cadre
+
+❌ "natural documentary lighting" + "dramatic studio lighting with rim highlights"
+   → deux philosophies lumière opposées dans le même plan
+
+❌ "sustained slow movement" (Laban) + "explosive high-energy kinetic"
+   → qualités d'effort contradictoires
+
+❌ Deux références DP nommées pour le même plan
+   → leurs philosophies visuelles font la moyenne → boue
+
+❌ "sacred geometry" + "Wes Anderson symmetry"
+   → mathématique organique vs design graphique — confusion visuelle
+
+❌ "extremely detailed, ultra-sharp" + "film grain, organic texture"
+   → digital vs analogique — signal conflictuel
 ```
 
-### Contradictions internes
+### Mots vides — à ne jamais utiliser
+```
+❌ "extremely detailed" | "ultra-sharp" | "8K" | "16K"
+❌ "perfect" | "stunning" | "breathtaking" | "award-winning" | "masterpiece"
+❌ "beautiful" | "gorgeous" | "amazing"
+   → États résultants, pas causes. Remplacer par les causes :
+✓ "Kodak Vision3 grain at 800 ISO" → grain réel
+✓ "Zeiss Supreme Prime T2.0" → netteté optique réelle
+✓ "golden hour, Deakins" → beau réel
+```
+
+### Autres contradictions classiques
 ```
 ❌ "minimalist composition with rich detailed background"
+❌ "intimate close-up, wide angle lens"   → contradiction physique
 ❌ "natural documentary style, shot on RED V-RAPTOR with cinema lenses"
-❌ "intimate close-up, wide angle lens"
-```
-
-### Demander le résultat au lieu de la cause
-```
-❌ "beautiful, emotional, cinematic"   → états résultants, pas causes
-✓ "golden hour, face lit from below, Roger Deakins"  → causes du beau
+   → l'esthétique contredit le choix technique
 ```
 
 ### Négatifs inutiles pour nano-banana-pro
-nano-banana-pro comprend les instructions positives complexes.
-Les negative_prompts sont moins nécessaires que pour Flux/SDXL.
-Utiliser seulement pour exclure des éléments très spécifiques.
+nano-banana-pro (Gemini 3 Pro) comprend les instructions positives complexes.
+Les `negative_prompt` sont moins nécessaires que pour Flux/SDXL.
+Utiliser **seulement** pour exclure des éléments très spécifiques et indésirables.
 
 ---
 

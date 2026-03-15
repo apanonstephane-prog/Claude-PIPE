@@ -357,4 +357,9 @@ export const DP_PRESETS: Record<string, Partial<ColorSpec>> = {
     dominants: ["near-monochrome desaturation", "diffuse halos", "cool neutral highlights"],
     filmStock: "Fujifilm Eterna 500",
   },
+  seale_madmax: {
+    dp: "John Seale — Mad Max Fury Road",
+    dominants: ["graphic novel saturation", "deep cobalt sky", "warm amber desert"],
+    filmStock: "ARRI LogC3",
+  },
 };
