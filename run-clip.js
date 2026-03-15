@@ -26,10 +26,10 @@ const { execSync, spawnSync } = require("child_process");
 // ─── Modèles ──────────────────────────────────────────────────────────────────
 
 const KLING_MODELS = {
-  "kling-3.0":       "klingai/kling-3.0",
-  "kling-v2.1":      "klingai/kling-v2.1",
-  "kling-v2.1-pro":  "klingai/kling-v2.1",
-  "kling-3.0-omni":  "klingai/kling-3.0-omni",
+  "kling-3.0":       "kwaivgi/kling-v3-video",
+  "kling-v2.1":      "kwaivgi/kling-v2.1",
+  "kling-v2.1-pro":  "kwaivgi/kling-v2.1-pro",
+  "kling-3.0-omni":  "kwaivgi/kling-v3-video",
 };
 
 const LIPSYNC_MODELS = {

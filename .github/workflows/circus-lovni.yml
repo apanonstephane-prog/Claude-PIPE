@@ -1,0 +1,90 @@
+name: "CIRCUS — L'Ovni | Génération clip"
+
+on:
+  workflow_dispatch:
+    inputs:
+      scene:
+        description: "Scène spécifique à générer (1-32) — vide = toutes"
+        required: false
+        default: ""
+      only_lipsync:
+        description: "Appliquer lipsync uniquement (vidéos déjà générées)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      dry_run:
+        description: "Dry-run : vérifier la config sans appeler Replicate"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  generate-clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: claude/replicate-media-pipeline-pFAFZ
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install ffmpeg
+        run: sudo apt-get install -y ffmpeg -q
+
+      - name: Créer les dossiers output
+        run: mkdir -p output/circus-lovni
+
+      - name: "run-clip.js — Génération + Lipsync"
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          SHOTSTACK_API_KEY_SANDBOX: ${{ secrets.SHOTSTACK_API_KEY_SANDBOX }}
+          SHOTSTACK_API_KEY_PRODUCTION: ${{ secrets.SHOTSTACK_API_KEY_PRODUCTION }}
+        run: |
+          CMD="node run-clip.js --config configs/circus-lovni.json"
+
+          if [ -n "${{ github.event.inputs.scene }}" ]; then
+            CMD="$CMD --scene ${{ github.event.inputs.scene }}"
+          fi
+
+          if [ "${{ github.event.inputs.only_lipsync }}" = "true" ]; then
+            CMD="$CMD --only-lipsync"
+          fi
+
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+
+          echo ">>> Commande : $CMD"
+          $CMD
+
+      - name: Résumé des scènes générées
+        if: always()
+        run: |
+          echo "=== SCÈNES GÉNÉRÉES ==="
+          ls -lah output/circus-lovni/*.mp4 2>/dev/null || echo "Pas encore de MP4"
+          echo ""
+          echo "=== METADATA ==="
+          cat output/circus-lovni/clip-meta.json 2>/dev/null | python3 -m json.tool | head -100 || echo "Pas de metadata"
+
+      - name: Upload vidéos générées
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: circus-lovni-scenes-${{ github.run_number }}
+          path: |
+            output/circus-lovni/*.mp4
+            output/circus-lovni/clip-meta.json
+            output/circus-lovni/audio-seg-*.mp3
+          retention-days: 30
