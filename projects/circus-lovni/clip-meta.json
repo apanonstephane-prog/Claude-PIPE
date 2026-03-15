@@ -1,0 +1,182 @@
+{
+  "scene_1": {
+    "sceneNum": 1,
+    "section": "intro",
+    "type": "contexte",
+    "videoUrl": "https://replicate.delivery/xezq/xc4u0Iyh9q4cCpBm4xjSDNqH3UFRpuaduEeUgEUoDhnpvkILA/tmpttd91y0z.mp4",
+    "localFile": "output/circus-lovni/scene-1-1773594069496.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/xc4u0Iyh9q4cCpBm4xjSDNqH3UFRpuaduEeUgEUoDhnpvkILA/tmpttd91y0z.mp4"
+  },
+  "scene_2": {
+    "sceneNum": 2,
+    "section": "intro",
+    "type": "insert",
+    "videoUrl": "https://replicate.delivery/xezq/oFfdLC9MZgRhWaGpTjU6s34GCMWPWVQohYIvt9btJxkvwkILA/tmpc05lb6a3.mp4",
+    "localFile": "output/circus-lovni/scene-2-1773594208739.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/oFfdLC9MZgRhWaGpTjU6s34GCMWPWVQohYIvt9btJxkvwkILA/tmpc05lb6a3.mp4"
+  },
+  "scene_3": {
+    "sceneNum": 3,
+    "section": "refrain1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/RSV0GeHOXw1pS6BIVduXDEllDC4Z5z4OhJ6nVm7wGAH3xkILA/tmp9hhqx3zl.mp4",
+    "localFile": "output/circus-lovni/scene-3-1773594353075.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/RSV0GeHOXw1pS6BIVduXDEllDC4Z5z4OhJ6nVm7wGAH3xkILA/tmp9hhqx3zl.mp4"
+  },
+  "scene_4": {
+    "sceneNum": 4,
+    "section": "refrain1",
+    "type": "insert",
+    "videoUrl": "https://replicate.delivery/xezq/0gBOQy4YourHHBhGPt6teCq2FGsH2Gfk6tZooUYkVgQFmJRWA/tmpe6csemyu.mp4",
+    "localFile": "output/circus-lovni/scene-4-1773594503005.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/0gBOQy4YourHHBhGPt6teCq2FGsH2Gfk6tZooUYkVgQFmJRWA/tmpe6csemyu.mp4"
+  },
+  "scene_5": {
+    "sceneNum": 5,
+    "section": "refrain1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/2juld0CqRbbLCZMe8oaNFcQfleDpAS8q1KRaef3Ww8kjCNJyC/tmp7sweq9h5.mp4",
+    "localFile": "output/circus-lovni/scene-5-1773594645350.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/2juld0CqRbbLCZMe8oaNFcQfleDpAS8q1KRaef3Ww8kjCNJyC/tmp7sweq9h5.mp4"
+  },
+  "scene_6": {
+    "sceneNum": 6,
+    "section": "refrain1",
+    "type": "symbolique",
+    "videoUrl": "https://replicate.delivery/xezq/0cUPCclrt0JfAqG58S8u09pMZfleKWXstVdSmTtTdLRSVTisA/tmpo2sj7g2i.mp4",
+    "localFile": "output/circus-lovni/scene-6-1773594794483.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/0cUPCclrt0JfAqG58S8u09pMZfleKWXstVdSmTtTdLRSVTisA/tmpo2sj7g2i.mp4"
+  },
+  "scene_7": {
+    "sceneNum": 7,
+    "section": "couplet1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/eNq3HrY8Tqy4ZKexechOEVRvRng5k1IYizgnC0WcAXZuZTisA/tmp7x949zn4.mp4",
+    "localFile": "output/circus-lovni/scene-7-1773594937360.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/eNq3HrY8Tqy4ZKexechOEVRvRng5k1IYizgnC0WcAXZuZTisA/tmp7x949zn4.mp4"
+  },
+  "scene_8": {
+    "sceneNum": 8,
+    "section": "couplet1",
+    "type": "insert",
+    "videoUrl": "https://replicate.delivery/xezq/KiUrvJ2rxfwtPSzBVLqD4IIliOe7d21C0TSeWZfGrB3D9mEZB/tmpobljksu5.mp4",
+    "localFile": "output/circus-lovni/scene-8-1773595091470.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/KiUrvJ2rxfwtPSzBVLqD4IIliOe7d21C0TSeWZfGrB3D9mEZB/tmpobljksu5.mp4"
+  },
+  "scene_9": {
+    "sceneNum": 9,
+    "section": "couplet1",
+    "type": "symbolique",
+    "videoUrl": "https://replicate.delivery/xezq/Lvqhy2PFEuriNpSiifg6MVAg3YQcnHQ0bUPgcRrGXd6u4kILA/tmptuddigln.mp4",
+    "localFile": "output/circus-lovni/scene-9-1773595231535.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/Lvqhy2PFEuriNpSiifg6MVAg3YQcnHQ0bUPgcRrGXd6u4kILA/tmptuddigln.mp4"
+  },
+  "scene_10": {
+    "sceneNum": 10,
+    "section": "couplet1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/IGTKnORZyTosOF43hmi9Pl7Qi43QKSSnzYOYTPyyd8U7cSkF/tmptziar8ba.mp4",
+    "localFile": "output/circus-lovni/scene-10-1773595375054.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/IGTKnORZyTosOF43hmi9Pl7Qi43QKSSnzYOYTPyyd8U7cSkF/tmptziar8ba.mp4"
+  },
+  "scene_11": {
+    "sceneNum": 11,
+    "section": "couplet1",
+    "type": "symbolique",
+    "videoUrl": "https://replicate.delivery/xezq/TS3DbY5qCHLYCliiLZh6pEkCeolS7e2XQgINBXovZNCD2JRWA/tmp1qlbt4hi.mp4",
+    "localFile": "output/circus-lovni/scene-11-1773595525060.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/TS3DbY5qCHLYCliiLZh6pEkCeolS7e2XQgINBXovZNCD2JRWA/tmp1qlbt4hi.mp4"
+  },
+  "scene_12": {
+    "sceneNum": 12,
+    "section": "couplet1",
+    "type": "contexte",
+    "videoUrl": "https://replicate.delivery/xezq/LL3K7nBjPMJwFp9PfY3H3NU6gjIj3nz6josvodJsjaTH8kILA/tmpqfssqaq7.mp4",
+    "localFile": "output/circus-lovni/scene-12-1773595664579.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/LL3K7nBjPMJwFp9PfY3H3NU6gjIj3nz6josvodJsjaTH8kILA/tmpqfssqaq7.mp4"
+  },
+  "scene_13": {
+    "sceneNum": 13,
+    "section": "couplet1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/KIWD8dxwkLoZLdZy421ftzzGn9iXqrCPLf5R1fZ44JoC1TisA/tmprtf40jlc.mp4",
+    "localFile": "output/circus-lovni/scene-13-1773595811419.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/KIWD8dxwkLoZLdZy421ftzzGn9iXqrCPLf5R1fZ44JoC1TisA/tmprtf40jlc.mp4"
+  },
+  "scene_14": {
+    "sceneNum": 14,
+    "section": "couplet1",
+    "type": "contexte",
+    "videoUrl": "https://replicate.delivery/xezq/z4afATj2iv1vSaOmotrl7xdLWdCaOrtAz9xuv6ZI18NceJRWA/tmpm98en8cs.mp4",
+    "localFile": "output/circus-lovni/scene-14-1773595960955.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/z4afATj2iv1vSaOmotrl7xdLWdCaOrtAz9xuv6ZI18NceJRWA/tmpm98en8cs.mp4"
+  },
+  "scene_15": {
+    "sceneNum": 15,
+    "section": "couplet1",
+    "type": "contexte",
+    "videoUrl": "https://replicate.delivery/xezq/mVMNhe37AUTyTa7fLRqdiKGUEG3QxuxLiALWEBeFfpSZ8nEZB/tmp02cvhpoh.mp4",
+    "localFile": "output/circus-lovni/scene-15-1773596105027.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/mVMNhe37AUTyTa7fLRqdiKGUEG3QxuxLiALWEBeFfpSZ8nEZB/tmp02cvhpoh.mp4"
+  },
+  "scene_16": {
+    "sceneNum": 16,
+    "section": "couplet1",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/pUMLN4iZeq1kGK1kwMRkUFprOz4hWSgVlk02Hd5GfvrXBKRWA/tmpotumhcea.mp4",
+    "localFile": "output/circus-lovni/scene-16-1773596249389.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/pUMLN4iZeq1kGK1kwMRkUFprOz4hWSgVlk02Hd5GfvrXBKRWA/tmpotumhcea.mp4"
+  },
+  "scene_17": {
+    "sceneNum": 17,
+    "section": "break",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/mJnYSpUadr4sMVDTYevYQbZDrSZ4z8Q8WXRUVtA5XHA5BlILA/tmpngn6xgw4.mp4",
+    "localFile": "output/circus-lovni/scene-17-1773596405713.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/mJnYSpUadr4sMVDTYevYQbZDrSZ4z8Q8WXRUVtA5XHA5BlILA/tmpngn6xgw4.mp4"
+  },
+  "scene_18": {
+    "sceneNum": 18,
+    "section": "refrain2",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/bfkwVj6zYH0Iaiw2psYk4lWVXWLWjXZ678zjfTFpWAKGGKRWA/tmp0exv768p.mp4",
+    "localFile": "output/circus-lovni/scene-18-1773596553034.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/bfkwVj6zYH0Iaiw2psYk4lWVXWLWjXZ678zjfTFpWAKGGKRWA/tmp0exv768p.mp4"
+  },
+  "scene_19": {
+    "sceneNum": 19,
+    "section": "refrain2",
+    "type": "insert",
+    "videoUrl": "https://replicate.delivery/xezq/yGkRZHxUefoLI0sQ2MGtERQfuyIbBBlnA57vzzDJaOxESUisA/tmpxmu3z6l1.mp4",
+    "localFile": "output/circus-lovni/scene-19-1773596740843.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/yGkRZHxUefoLI0sQ2MGtERQfuyIbBBlnA57vzzDJaOxESUisA/tmpxmu3z6l1.mp4"
+  },
+  "scene_20": {
+    "sceneNum": 20,
+    "section": "refrain2",
+    "type": "artiste",
+    "videoUrl": "https://replicate.delivery/xezq/BtS7ATQXf2W6aShH5UjohRElWnbfLvviqSrmMGjuoRetWUisA/tmp4wckydi5.mp4",
+    "localFile": "output/circus-lovni/scene-20-1773596887089.mp4",
+    "lipsync": false,
+    "finalUrl": "https://replicate.delivery/xezq/BtS7ATQXf2W6aShH5UjohRElWnbfLvviqSrmMGjuoRetWUisA/tmp4wckydi5.mp4"
+  }
+}
