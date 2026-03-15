@@ -1,0 +1,17 @@
+{
+  "comment": "Dépose tes photos avec leurs noms originaux, puis remplis juste ce fichier.",
+  "S1": "",
+  "S2": "",
+  "S3": "",
+  "S4": "",
+  "S5": "",
+  "S6": "",
+  "legende": {
+    "S1": "corps entier debout — dominant, affirmé",
+    "S2": "portrait serré frontal — regard caméra intense",
+    "S3": "profil gauche — regard vers la gauche",
+    "S4": "3/4 face — légèrement tourné",
+    "S5": "accroupi / assis bas — posture basse",
+    "S6": "extrême gros plan visage — split red/blue"
+  }
+}
