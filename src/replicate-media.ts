@@ -64,8 +64,11 @@ export interface VideoRequest {
   context?: GenerationContext;
   /** Passer un MasterPromptOptions pour construire un prompt Kling 3.0 optimal */
   masterPrompt?: MasterPromptOptions;
-  /** Kling 3.0 : première frame en image-to-video */
+  /** Kling 3.0 : première frame (start_image) — image-to-video */
   imageUrl?: string;
+  /** Kling 3.0 : dernière frame (end_image) — contrôle début+fin.
+   *  ATTENTION : incompatible avec multi_shots. Si fourni, multi-shot est désactivé. */
+  endImageUrl?: string;
   /** Kling 3.0 Omni : image de référence pour cohérence personnage/style */
   referenceImageUrl?: string;
 }
@@ -228,8 +231,11 @@ export class ReplicateMediaPipeline {
 
     const characterOrientation = isKlingOmni && mp?.elements?.[0]?.characterOrientation;
 
-    // multi_shots activé automatiquement si le masterPrompt contient des shots
-    const hasMultiShots = isKling3 && mp?.shots && mp.shots.length > 1;
+    // multi_shots activé automatiquement si le masterPrompt contient des shots.
+    // CRITIQUE : multi_shots est incompatible avec endImageUrl — si les deux
+    // sont fournis, multi_shots est silencieusement désactivé par l'API Kling.
+    const hasEndImage = !!request.endImageUrl;
+    const hasMultiShots = isKling3 && mp?.shots && mp.shots.length > 1 && !hasEndImage;
 
     const input: Record<string, unknown> = {
       prompt: enriched,
@@ -239,12 +245,23 @@ export class ReplicateMediaPipeline {
             aspect_ratio: mp?.ratio ?? "16:9",
             mode: "pro",
             multi_shots: hasMultiShots ?? false,
+            // Paramètre audio : "sound" (WaveSpeed/fal) ou "generate_audio" (Omni)
             sound: mp?.generateAudio ?? false,
-            ...(request.imageUrl && { image: request.imageUrl }),
+            // start_image (terme API officiel) pour image-to-video
+            ...(request.imageUrl && { start_image: request.imageUrl }),
+            ...(hasEndImage && { end_image: request.endImageUrl }),
             ...(isKlingOmni && {
+              generate_audio: mp?.generateAudio ?? false,
               ...(request.referenceImageUrl && { reference_image: request.referenceImageUrl }),
               ...(elementImages && { elements: elementImages }),
               ...(characterOrientation && { character_orientation: characterOrientation }),
+              // Voice IDs Omni : référencés dans le prompt comme <<<voice_1>>>
+              ...(mp?.elements?.[0]?.voiceId && {
+                voice_ids: mp.elements
+                  .filter((e) => e.voiceId)
+                  .map((e) => e.voiceId)
+                  .slice(0, 2), // max 2 voix par tâche
+              }),
             }),
           }
         : {

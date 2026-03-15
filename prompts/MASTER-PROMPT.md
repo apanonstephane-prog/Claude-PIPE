@@ -132,9 +132,9 @@ This image is about waiting. The city is awake but indifferent.
   "cfg_scale": 0.5,            // 0.0-1.0 : faible=stylisé, moyen=cinéma, élevé=produit exact
   "mode": "std" | "pro",       // std = 720p, pro = 1080p
   "multi_shots": true,         // activer le multi-shot (jusqu'à 6 plans)
-  "sound": true,               // activer l'audio natif
-  "image": "url",              // première frame (image-to-video)
-  "end_image": "url",          // dernière frame (contrôle début/fin)
+  "sound": true,               // activer l'audio natif (V3) / "generate_audio" (Omni)
+  "start_image": "url",        // première frame (image-to-video)
+  "end_image": "url",          // dernière frame — INCOMPATIBLE avec multi_shots
 }
 ```
 
@@ -156,6 +156,16 @@ Le prompt décrit un plan en cours de tournage, pas une image statique.
 - Durée min recommandée par plan : 2s
 - Paramètre API à activer : `multi_shots: true`
 - Continuité spatiale maintenue automatiquement entre les plans
+
+**CONTRAINTE CRITIQUE** : `multi_shots` est **incompatible avec `end_image`**.
+Si une dernière frame est fournie, le multi-shot est silencieusement désactivé.
+Choisir : soit multi-shot, soit contrôle début+fin.
+
+**Workflow recommandé** : itérer du simple au complexe.
+Commencer par un plan unique → valider le style et la physique → passer au multi-shot.
+Ne pas commencer directement à 6 plans.
+
+**Structure narrative** : hook (large, établissement) → milieu (action, mouvement) → payoff (gros plan, révélation)
 
 **Règle de rythme** : 4–6 plans pour 10–15s = sweet spot.
 6 plans en moins de 10s = précipité. 2 plans sur 15s = lent.
@@ -181,10 +191,24 @@ AUDIO: [Ambiance] GRADE: [Référence DP] 4K HDR.
 ```
 @character_label [Langue/accent] "Texte du dialogue."
 [Speaker: Nom du personnage] "Dialogue"
+
+// Avec timing précis :
+Beat 0-5s: [Personnage A marche. Bruits de pas sur parquet.]
+Beat 5s: [Porte claque. Silence ambiant.]
+Beat 7s: [Marie, voix basse]: "Il faut qu'on parle."
+Beat 10s: [Paul, défensif]: "De quoi exactement ?"
 ```
-- Une ou deux phrases max par plan
-- Phrases courtes = meilleur lipsync
-- Utiliser labels, jamais pronoms (il/elle)
+
+**Voice IDs (Omni uniquement) :**
+- Extraire des voix de référence comme `<<<voice_1>>>` et `<<<voice_2>>>`
+- Max 2 voix par tâche
+- Référencer dans le prompt : `[<<<voice_1>>>]: "Dialogue"`
+
+**Règles lipsync :**
+- 1–2 phrases max par plan
+- Phrases courtes = lipsync plus précis
+- Labels explicites, jamais pronoms (il/elle)
+- Spécifier langue et accent si non-anglais
 
 **Alignement BPM (musique) :**
 ```
@@ -215,6 +239,49 @@ AUDIO: Wind. Distant water. No music.
 GRADE: Hoyte van Hoytema — Dunkirk. Cold steel blue, warm emerging gold.
 4K HDR, 16:9.
 ```
+
+### Les 4 règles d'or (communauté Kling 3.0)
+
+**1. Motion verbs = signal le plus sensible**
+```
+❌ "moves", "goes", "walks toward"   → générique
+✓  "dolly push", "whip-pan", "shoulder-cam drift", "crash zoom", "snap focus"
+```
+
+**2. Texture = crédibilité physique**
+Inclure au moins un détail micro-physique par plan :
+grain pellicule · flares optiques · reflets · brillance tissu · condensation · fumée · sueur · vapeur de souffle
+→ Signaux tactiles qui font la différence entre rendu physique et CGI-lisse.
+
+**3. Décrire le flux temporel, pas l'état**
+```
+❌ "A woman stands in a field at sunset"   → image figée
+✓  "Beginning: woman distant in field. Camera slowly drifts forward.
+    End: tight on her face as light fades behind her."
+```
+
+**4. Établir en premier, maintenir ensuite**
+Définir personnages, environnement, objets-clés dans les premières lignes.
+Kling maintient ces éléments tout au long de la vidéo une fois établis.
+
+### Principe "camera first" — Kling 3.0
+
+**Mettre le mouvement caméra EN PREMIER dans le prompt.**
+Kling pondère les premiers mots-clés de mouvement plus fortement que les suivants.
+
+```
+✓  "Handheld shoulder-cam with subtle drift — a woman walks through rain"
+❌ "A woman walks through rain, handheld shoulder-cam with subtle drift"
+```
+
+**Max 2 techniques de mouvement par plan.**
+```
+❌ "Dutch angle whip pan with rack focus during crane shot"  → résultat confus
+✓  "Low crane shot arriving at eye level"
+✓  "Dolly zoom (Vertigo effect) — subject static, background compresses"
+```
+
+**Kling V3 supporte maintenant le dolly zoom / Vertigo effect** — V2.1 pro échouait sur ce mouvement.
 
 ### Principe end-state caméra — la règle la plus importante pour Kling 3.0
 
