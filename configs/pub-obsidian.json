@@ -50,7 +50,7 @@
         "text": "OBSIDIAN ARTS FILMS STUDIO",
         "start": 10,
         "duration": 4,
-        "fontSize": 48,
+        "fontSize": "x-large",
         "fontColor": "#d4af37",
         "position": "center",
         "style": "future"
@@ -59,7 +59,7 @@
         "text": "Chaque histoire merite d etre vue.",
         "start": 12,
         "duration": 3,
-        "fontSize": 28,
+        "fontSize": "medium",
         "fontColor": "#ffffff",
         "position": "bottom",
         "style": "minimal"
