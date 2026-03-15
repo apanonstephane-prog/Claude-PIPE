@@ -1,6 +1,6 @@
 {
   "_project": "CIRCUS — L'Ovni",
-  "_version": "1.0",
+  "_version": "1.1",
   "_date": "2026-03-15",
   "_workflow": "Kling 3.0 (text-to-video + image-to-video CREF) → LatentSync → Shotstack BPM-cut → MP4",
 
