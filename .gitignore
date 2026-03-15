@@ -6,3 +6,6 @@ output/
 *.png
 *.jpg
 *.webp
+
+# Audio — garder le dossier, ignorer les gros fichiers hors audio/
+# Pour les fichiers > 50MB utiliser Git LFS
