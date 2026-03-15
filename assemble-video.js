@@ -64,7 +64,7 @@ const ENDPOINTS = {
 
 function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
   const clipDuration = shotstackConfig.clipDuration || 3.75;
-  const transition = shotstackConfig.transition || "fadeSlow";
+  // Pas de fondu enchaîné par défaut — coupes sèches
   const kenBurnsEffects = ["zoomIn", "zoomOut", "slideLeft", "slideRight"];
 
   let currentStart = 0;
@@ -86,7 +86,6 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
         : { type: "image", src: url },
       start,
       length: clipDuration,
-      transition: { in: "fade", out: "fade" },
     };
 
     if (!isVideo) {
@@ -111,7 +110,6 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
     },
     start: overlay.start,
     length: overlay.duration,
-    transition: { in: "fade", out: "fade" },
   }));
 
   const tracks = [{ clips: mediaClips }];

@@ -58,7 +58,7 @@
   "shotstack": {
     "env": "sandbox",
     "clipDuration": 3.75,
-    "transition": "fadeSlow",
+    "transition": "none",
     "resolution": "hd",
     "fps": 25,
     "_soundtrack_disabled": "https://shotstack-assets.s3-ap-southeast-2.amazonaws.com/music/unminus/noir.mp3",
