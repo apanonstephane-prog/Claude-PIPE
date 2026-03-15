@@ -1,0 +1,50 @@
+{
+  "outputDir": "output",
+  "requests": [
+    {
+      "type": "image",
+      "prompt": "A futuristic city skyline at sunset with neon lights reflecting on wet streets",
+      "model": "flux-schnell",
+      "style": "cinematic",
+      "width": 1024,
+      "height": 1024,
+      "numOutputs": 1
+    },
+    {
+      "type": "image",
+      "prompt": "Minimalist product logo for a tech startup, geometric shapes",
+      "model": "flux-dev",
+      "style": "logo",
+      "width": 512,
+      "height": 512,
+      "numOutputs": 2
+    },
+    {
+      "type": "image",
+      "prompt": "Abstract data visualization with flowing lines and particles",
+      "model": "sdxl",
+      "style": "abstract",
+      "width": 1024,
+      "height": 768,
+      "numOutputs": 1
+    },
+    {
+      "type": "video",
+      "prompt": "A drone flying over a dense green forest at golden hour",
+      "model": "ltx-video",
+      "style": "documentary",
+      "width": 1280,
+      "height": 720,
+      "duration": 5
+    },
+    {
+      "type": "video",
+      "prompt": "Cinematic title sequence with light streaks on a dark background",
+      "model": "video-01",
+      "style": "cinematic",
+      "width": 1920,
+      "height": 1080,
+      "duration": 8
+    }
+  ]
+}

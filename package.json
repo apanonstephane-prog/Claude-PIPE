@@ -1,0 +1,28 @@
+{
+  "name": "claude-pipe",
+  "version": "1.0.0",
+  "description": "Universal Replicate media generation pipeline for Claude Code",
+  "main": "generate-images.js",
+  "scripts": {
+    "generate": "node generate-images.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "replicate": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0",
+    "dotenv": "^16.4.0"
+  },
+  "keywords": ["replicate", "ai", "image-generation", "video-generation", "claude"],
+  "license": "MIT"
+}
