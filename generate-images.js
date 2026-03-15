@@ -164,6 +164,7 @@ async function main() {
 
     try {
       const output = await client.run(modelId, { input });
+      console.log(`  Raw output type: ${typeof output}, isArray: ${Array.isArray(output)}`);
       const urls = Array.isArray(output) ? output : [output];
 
       for (let i = 0; i < urls.length; i++) {
@@ -171,15 +172,29 @@ async function main() {
         const filename = `${Date.now()}-${i + 1}.${ext}`;
         const dest = path.join(outputDir, filename);
 
-        if (typeof urls[i] === "string" && urls[i].startsWith("http")) {
-          await downloadFile(urls[i], dest);
+        // replicate v1.x retourne des FileOutput objects — convertir en string URL
+        const rawUrl = urls[i];
+        const urlStr =
+          typeof rawUrl === "string"
+            ? rawUrl
+            : rawUrl && typeof rawUrl.url === "function"
+            ? rawUrl.url().toString()
+            : rawUrl && typeof rawUrl.toString === "function"
+            ? rawUrl.toString()
+            : String(rawUrl);
+
+        console.log(`  Output [${i}]: ${urlStr}`);
+
+        if (urlStr && urlStr.startsWith("http")) {
+          await downloadFile(urlStr, dest);
           console.log(`  Saved: ${dest}`);
         } else {
-          console.log(`  URL: ${urls[i]}`);
+          console.error(`  WARN: URL inattendue — ${urlStr}`);
         }
       }
     } catch (err) {
       console.error(`  ERROR: ${err.message}`);
+      console.error(err.stack);
     }
   }
 
