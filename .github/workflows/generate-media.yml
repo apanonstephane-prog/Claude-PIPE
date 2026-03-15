@@ -45,6 +45,18 @@ on:
         description: "Fichier config batch dans configs/ (ex: pub-obsidian.json). Laisse vide pour tous les lancer."
         required: false
         default: ""
+      assemble:
+        description: "Assembler en vidéo finale avec Shotstack après la génération ?"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+      shotstack_env:
+        description: "Environnement Shotstack"
+        required: false
+        default: "sandbox"
+        type: choice
+        options: [sandbox, production]
 
   push:
     paths:
@@ -88,7 +100,7 @@ jobs:
         run: |
           node generate-images.js --config "configs/${{ github.event.inputs.config }}"
 
-      # ── Cas 3 : tous les fichiers configs/ (dispatch sans config + push) ──
+      # ── Cas 3 : tous les fichiers configs/ ────────────────────────────────
       - name: Generate media (tous les configs/)
         if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config == '' }}
         env:
@@ -98,6 +110,48 @@ jobs:
             echo ">>> Traitement de $f..."
             node generate-images.js --config "$f"
           done
+
+      # ── Collecter les URLs générées pour Shotstack ────────────────────────
+      - name: Collecter URLs des images générées
+        if: ${{ github.event.inputs.assemble != 'false' }}
+        run: |
+          echo "Recherche des fichiers générés dans output/..."
+          ls -la output/ || echo "Dossier output vide"
+          # Lister les fichiers PNG générés
+          find output/ -name "*.png" -o -name "*.jpg" -o -name "*.webp" 2>/dev/null | sort > output/generated-files.txt
+          cat output/generated-files.txt || echo "Aucun fichier trouvé"
+
+      # ── Shotstack : assemblage vidéo finale ───────────────────────────────
+      - name: Assembler vidéo finale (Shotstack)
+        if: ${{ github.event.inputs.assemble != 'false' }}
+        env:
+          SHOTSTACK_API_KEY_SANDBOX: ${{ secrets.SHOTSTACK_API_KEY_SANDBOX }}
+          SHOTSTACK_API_KEY_PRODUCTION: ${{ secrets.SHOTSTACK_API_KEY_PRODUCTION }}
+        run: |
+          CONFIG="${{ github.event.inputs.config }}"
+          ENV="${{ github.event.inputs.shotstack_env }}"
+          ENV="${ENV:-sandbox}"
+
+          # Déterminer le fichier config à utiliser
+          if [ -n "$CONFIG" ]; then
+            CONFIG_PATH="configs/$CONFIG"
+          else
+            CONFIG_PATH="configs/pub-obsidian.json"
+          fi
+
+          echo ">>> Assemblage Shotstack avec $CONFIG_PATH (env: $ENV)"
+
+          # Récupérer les URLs Replicate depuis les logs (output sauvegardé)
+          if [ -f "output/replicate-urls.txt" ]; then
+            node assemble-video.js \
+              --urls-file output/replicate-urls.txt \
+              --config "$CONFIG_PATH" \
+              --env "$ENV" \
+              --output output
+          else
+            echo "Pas de fichier replicate-urls.txt — assemblage ignoré."
+            echo "Astuce: les URLs Replicate sont temporaires, re-lance avec --urls 'url1,url2,...'"
+          fi
 
       # ── Upload artefacts ───────────────────────────────────────────────────
       - name: Upload artefacts générés

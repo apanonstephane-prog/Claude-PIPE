@@ -37,5 +37,33 @@
       "height": 1920,
       "numOutputs": 1
     }
-  ]
+  ],
+  "shotstack": {
+    "preset": "obsidian",
+    "env": "sandbox",
+    "clipDuration": 3.5,
+    "transition": "fadeSlow",
+    "resolution": "hd",
+    "fps": 25,
+    "textOverlays": [
+      {
+        "text": "OBSIDIAN ARTS FILMS STUDIO",
+        "start": 10,
+        "duration": 4,
+        "fontSize": 48,
+        "fontColor": "#d4af37",
+        "position": "center",
+        "style": "future"
+      },
+      {
+        "text": "Chaque histoire merite d etre vue.",
+        "start": 12,
+        "duration": 3,
+        "fontSize": 28,
+        "fontColor": "#ffffff",
+        "position": "bottom",
+        "style": "minimal"
+      }
+    ]
+  }
 }

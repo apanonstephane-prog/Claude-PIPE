@@ -128,6 +128,12 @@ async function main() {
 
   console.log(`\nClaude-PIPE — Generating ${requests.length} item(s)...\n`);
 
+  // Fichier pour collecter les URLs (utilisé par Shotstack ensuite)
+  const globalOutputDir = requests[0]?.outputDir || "output";
+  fs.mkdirSync(globalOutputDir, { recursive: true });
+  const urlsFile = path.join(globalOutputDir, "replicate-urls.txt");
+  const allUrls = [];
+
   for (const req of requests) {
     const isVideo = req.type === "video";
     const models = isVideo ? VIDEO_MODELS : IMAGE_MODELS;
@@ -186,6 +192,7 @@ async function main() {
         console.log(`  Output [${i}]: ${urlStr}`);
 
         if (urlStr && urlStr.startsWith("http")) {
+          allUrls.push(urlStr);
           await downloadFile(urlStr, dest);
           console.log(`  Saved: ${dest}`);
         } else {
@@ -196,6 +203,12 @@ async function main() {
       console.error(`  ERROR: ${err.message}`);
       console.error(err.stack);
     }
+  }
+
+  // Sauvegarder toutes les URLs pour Shotstack
+  if (allUrls.length > 0) {
+    fs.writeFileSync(urlsFile, allUrls.join("\n"));
+    console.log(`\n  URLs sauvegardées: ${urlsFile} (${allUrls.length} URL(s))`);
   }
 
   console.log("\nDone.");
