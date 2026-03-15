@@ -53,6 +53,16 @@ on:
         default: "sandbox"
         type: choice
         options: [sandbox, production]
+      skip_generation:
+        description: "Sauter étapes 1 et 2 (réutiliser les vidéos déjà ingérées sur Shotstack)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      shotstack_cdn_urls:
+        description: "URLs CDN Shotstack séparées par virgule (si skip_generation=true)"
+        required: false
+        default: ""
 
   push:
     paths:
@@ -76,8 +86,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ── ÉTAPE 0 : Réutilisation URLs existantes (skip_generation=true) ──────
+      - name: "Étape 0 — Réutilisation assets existants"
+        if: ${{ github.event.inputs.skip_generation == 'true' }}
+        run: |
+          mkdir -p output
+          URLS="${{ github.event.inputs.shotstack_cdn_urls }}"
+          if [ -n "$URLS" ]; then
+            echo "$URLS" | tr ',' '\n' > output/kling-urls.txt
+            echo ">>> URLs CDN réutilisées:"
+            cat output/kling-urls.txt
+          else
+            echo "WARN: skip_generation=true mais aucune URL fournie."
+          fi
+
       # ── ÉTAPE 1 : Génération images (nano-banana-pro) ──────────────────────
       - name: "Étape 1 — Génération images (nano-banana-pro)"
+        if: ${{ github.event.inputs.skip_generation != 'true' }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
@@ -106,7 +131,7 @@ jobs:
 
       # ── ÉTAPE 2 : Animation Kling 3.0 ────────────────────────────────────
       - name: "Étape 2 — Animation Kling 3.0 (image-to-video)"
-        if: ${{ github.event.inputs.animate != 'false' }}
+        if: ${{ github.event.inputs.animate != 'false' && github.event.inputs.skip_generation != 'true' }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |

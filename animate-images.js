@@ -19,6 +19,72 @@ const path = require("path");
 const https = require("https");
 const http = require("http");
 
+// ─── Shotstack Ingest (URLs permanentes) ──────────────────────────────────────
+
+const SHOTSTACK_INGEST = {
+  sandbox: "https://api.shotstack.io/ingest/stage",
+  production: "https://api.shotstack.io/ingest/v1",
+};
+
+async function ingestToShotstack(videoUrl, env = "sandbox") {
+  const apiKey =
+    env === "production"
+      ? process.env.SHOTSTACK_API_KEY_PRODUCTION
+      : process.env.SHOTSTACK_API_KEY_SANDBOX;
+
+  if (!apiKey) {
+    console.log(`  WARN: SHOTSTACK_API_KEY_${env.toUpperCase()} absent — ingest ignoré`);
+    return null;
+  }
+
+  try {
+    // Soumettre l'URL à l'ingest Shotstack
+    const submitRes = await fetch(`${SHOTSTACK_INGEST[env]}/sources`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+      body: JSON.stringify({ url: videoUrl }),
+    });
+
+    if (!submitRes.ok) {
+      const t = await submitRes.text();
+      console.log(`  WARN: Ingest submit failed (${submitRes.status}): ${t}`);
+      return null;
+    }
+
+    const submitData = await submitRes.json();
+    const sourceId = submitData.data?.id;
+    if (!sourceId) return null;
+
+    console.log(`  Ingest soumis: ${sourceId}`);
+
+    // Polling jusqu'à "ready"
+    for (let attempt = 0; attempt < 24; attempt++) {
+      await new Promise((r) => setTimeout(r, 5000));
+      const pollRes = await fetch(`${SHOTSTACK_INGEST[env]}/sources/${sourceId}`, {
+        headers: { "x-api-key": apiKey },
+      });
+      if (!pollRes.ok) continue;
+      const pollData = await pollRes.json();
+      const status = pollData.data?.attributes?.status;
+      const cdnUrl = pollData.data?.attributes?.url;
+      console.log(`  Ingest [${sourceId}] → ${status}`);
+      if (status === "ready" && cdnUrl) {
+        console.log(`  CDN URL: ${cdnUrl}`);
+        return cdnUrl;
+      }
+      if (status === "failed") {
+        console.log(`  WARN: Ingest échoué pour ${sourceId}`);
+        return null;
+      }
+    }
+    console.log(`  WARN: Ingest timeout pour ${sourceId}`);
+    return null;
+  } catch (err) {
+    console.log(`  WARN: Ingest error: ${err.message}`);
+    return null;
+  }
+}
+
 // ─── Kling model IDs ──────────────────────────────────────────────────────────
 
 const KLING_MODELS = {
@@ -158,16 +224,20 @@ async function main() {
       console.log(`  Video URL: ${videoUrl}`);
 
       if (videoUrl && videoUrl.startsWith("http")) {
-        videoUrls.push(videoUrl);
+        // Ingest immédiat sur Shotstack CDN (URL permanente)
+        const shotstackEnv = config.shotstack?.env || "sandbox";
+        console.log(`  Ingest Shotstack (${shotstackEnv})...`);
+        const cdnUrl = await ingestToShotstack(videoUrl, shotstackEnv);
+        const finalUrl = cdnUrl || videoUrl; // fallback sur URL Replicate si ingest échoue
+        videoUrls.push(finalUrl);
 
-        // Télécharger le clip
+        // Télécharger le clip en local aussi
         const filename = `scene-${i + 1}-${Date.now()}.mp4`;
         const dest = path.join(outputDir, filename);
         await downloadFile(videoUrl, dest);
         console.log(`  Saved: ${dest}`);
       } else {
         console.error(`  WARN: URL inattendue — ${videoUrl}`);
-        // Fallback: utiliser l'image originale si Kling échoue
         videoUrls.push(imageUrl);
       }
     } catch (err) {
