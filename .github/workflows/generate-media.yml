@@ -1,21 +1,20 @@
 name: Generate Media (Replicate)
 
 on:
-  # Déclenchement manuel avec paramètres
   workflow_dispatch:
     inputs:
       prompt:
-        description: "Prompt de génération"
+        description: "Prompt direct (optionnel — laisse vide pour utiliser un fichier config)"
         required: false
         default: ""
       type:
-        description: "Type de média"
+        description: "Type de média (utilisé uniquement si prompt est renseigné)"
         required: false
         default: "image"
         type: choice
         options: [image, video]
       model:
-        description: "Modèle à utiliser"
+        description: "Modèle (utilisé uniquement si prompt est renseigné)"
         required: false
         default: "flux-schnell"
         type: choice
@@ -30,7 +29,7 @@ on:
           - kling-v2.1-pro
           - kling-3.0
       style:
-        description: "Style visuel"
+        description: "Style visuel (utilisé uniquement si prompt est renseigné)"
         required: false
         default: "cinematic"
         type: choice
@@ -43,11 +42,10 @@ on:
           - illustration
           - logo
       config:
-        description: "Fichier de config batch (ex: pub-obsidian.json) — ignoré si prompt est renseigné"
+        description: "Fichier config batch dans configs/ (ex: pub-obsidian.json). Laisse vide pour tous les lancer."
         required: false
         default: ""
 
-  # Déclenchement automatique quand un fichier .json de config est pushé
   push:
     paths:
       - "configs/*.json"
@@ -69,6 +67,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ── Cas 1 : prompt direct ──────────────────────────────────────────────
       - name: Generate media (prompt direct)
         if: ${{ github.event.inputs.prompt != '' }}
         env:
@@ -81,23 +80,26 @@ jobs:
             --style "${{ github.event.inputs.style }}" \
             --output output
 
-      - name: Generate media (fichier config)
+      # ── Cas 2 : fichier config spécifique ─────────────────────────────────
+      - name: Generate media (fichier config spécifique)
         if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config != '' }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
           node generate-images.js --config "configs/${{ github.event.inputs.config }}"
 
-      - name: Generate media (config pushée automatiquement)
-        if: ${{ github.event_name == 'push' }}
+      # ── Cas 3 : tous les fichiers configs/ (dispatch sans config + push) ──
+      - name: Generate media (tous les configs/)
+        if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config == '' }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
           for f in configs/*.json; do
-            echo "Traitement de $f..."
+            echo ">>> Traitement de $f..."
             node generate-images.js --config "$f"
           done
 
+      # ── Upload artefacts ───────────────────────────────────────────────────
       - name: Upload artefacts générés
         uses: actions/upload-artifact@v4
         if: always()
