@@ -121,12 +121,9 @@ async function main() {
       tracks: [{ clips }],
     },
     output: {
-      format: "mp4",
-      fps:    25,
-      size: {
-        width:  1920,
-        height: 1080,
-      },
+      format:     "mp4",
+      resolution: "1080",
+      fps:        25,
     },
   };
 
