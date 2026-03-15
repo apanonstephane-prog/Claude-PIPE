@@ -79,6 +79,13 @@ Style is **auto-detected** from project/conversation context if not specified.
 
 ---
 
+## Démarrage de chaque projet
+
+**Toujours lire et remplir `QUESTIONNAIRE.md` avant toute génération.**
+Les réponses déterminent : modèles, format, durée, rythme de montage, CREF, BPM.
+
+---
+
 ## Rules for Claude Code
 
 - **This repo is self-contained.** Never mix pipeline code into other projects — always import from here.
