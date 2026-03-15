@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 /**
  * Claude-PIPE — Shotstack video assembly CLI
+ * Assemble clips vidéo Kling + son + sous-titres → MP4 final 9:16
  *
  * Usage:
+ *   node assemble-video.js --config configs/pub-obsidian.json
+ *   node assemble-video.js --config configs/pub-obsidian.json --env production
  *   node assemble-video.js --urls "url1,url2,url3,url4" --preset obsidian
- *   node assemble-video.js --config configs/pub-obsidian.json --env sandbox
- *   node assemble-video.js --urls-file output/urls.txt --preset obsidian --env production
- *
- * Env vars:
- *   SHOTSTACK_API_KEY_SANDBOX     (required for sandbox)
- *   SHOTSTACK_API_KEY_PRODUCTION  (required for production)
  */
 
 require("dotenv").config();
@@ -40,139 +37,107 @@ function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const proto = url.startsWith("https") ? https : http;
     const file = fs.createWriteStream(dest);
-    proto.get(url, (res) => {
-      if (res.statusCode === 302 || res.statusCode === 301) {
-        file.close();
-        return downloadFile(res.headers.location, dest).then(resolve).catch(reject);
-      }
-      res.pipe(file);
-      file.on("finish", () => file.close(resolve));
-    }).on("error", (err) => {
-      fs.unlink(dest, () => {});
-      reject(err);
-    });
+    proto
+      .get(url, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          file.close();
+          return downloadFile(res.headers.location, dest).then(resolve).catch(reject);
+        }
+        res.pipe(file);
+        file.on("finish", () => file.close(resolve));
+      })
+      .on("error", (err) => {
+        fs.unlink(dest, () => {});
+        reject(err);
+      });
   });
 }
 
-// ─── Shotstack API ─────────────────────────────────────────────────────────────
+// ─── Shotstack endpoints ───────────────────────────────────────────────────────
 
 const ENDPOINTS = {
   sandbox: "https://api.shotstack.io/stage/render",
   production: "https://api.shotstack.io/v1/render",
 };
 
-function buildObsidianPayload(imageUrls) {
-  const effects = ["zoomIn", "zoomOut", "slideLeft", "slideRight"];
-  let currentTime = 0;
+// ─── Payload builder ───────────────────────────────────────────────────────────
 
-  const mediaClips = imageUrls.map((url, i) => {
-    const start = currentTime;
-    currentTime += 3.5;
-    return {
-      asset: { type: "image", src: url },
+function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
+  const clipDuration = shotstackConfig.clipDuration || 3.75;
+  const transition = shotstackConfig.transition || "fadeSlow";
+  const kenBurnsEffects = ["zoomIn", "zoomOut", "slideLeft", "slideRight"];
+
+  let currentStart = 0;
+
+  // ── Track 1 : clips média (vidéo ou image) ─────────────────────────────────
+  const mediaClips = mediaUrls.map((url, i) => {
+    const start = currentStart;
+    currentStart += clipDuration;
+
+    const isVideo = mediaType === "video" || url.includes(".mp4") || url.includes("video");
+
+    const clip = {
+      asset: isVideo
+        ? {
+            type: "video",
+            src: url,
+            volume: 0,
+            trim: 0,
+          }
+        : {
+            type: "image",
+            src: url,
+          },
       start,
-      length: 3.5,
-      effect: effects[i % 4],
-      transition: { in: "fadeSlow", out: "fadeSlow" },
+      length: clipDuration,
+      fit: "cover",
+      transition: {
+        in: transition,
+        out: transition,
+      },
     };
+
+    // Ken Burns uniquement pour les images statiques
+    if (!isVideo) {
+      clip.effect = kenBurnsEffects[i % kenBurnsEffects.length];
+    }
+
+    return clip;
   });
 
-  return {
-    timeline: {
-      background: "#000000",
-      tracks: [
-        { clips: mediaClips },
-        {
-          clips: [
-            {
-              asset: {
-                type: "title",
-                text: "OBSIDIAN ARTS FILMS STUDIO",
-                style: "future",
-                color: "#d4af37",
-                size: "x-large",
-                position: "center",
-              },
-              start: 10,
-              length: 4,
-              transition: { in: "fade", out: "fade" },
-            },
-            {
-              asset: {
-                type: "title",
-                text: "Chaque histoire merite d etre vue.",
-                style: "minimal",
-                color: "#ffffff",
-                size: "medium",
-                position: "bottom",
-              },
-              start: 12,
-              length: 3,
-              transition: { in: "fade", out: "fade" },
-            },
-          ],
-        },
-      ],
-    },
-    output: {
-      format: "mp4",
-      resolution: "hd",
-      fps: 25,
-      size: { width: 1080, height: 1920 },
-    },
-  };
-}
+  const totalDuration = currentStart;
 
-function buildCustomPayload(shotstackConfig, imageUrls) {
-  const effects = ["zoomIn", "zoomOut", "slideLeft", "slideRight"];
-  let currentTime = 0;
-
-  const clips = shotstackConfig.clips || imageUrls.map((url, i) => ({
-    type: "image",
-    url,
-    duration: shotstackConfig.clipDuration || 3.5,
-    effect: effects[i % 4],
+  // ── Track 2 : overlays texte synchronisés ─────────────────────────────────
+  const textClips = (shotstackConfig.textOverlays || []).map((overlay) => ({
+    asset: {
+      type: "title",
+      text: overlay.text,
+      style: overlay.style || "minimal",
+      color: overlay.fontColor || "#ffffff",
+      size: overlay.fontSize || "medium",
+      position: overlay.position || "bottom",
+    },
+    start: overlay.start,
+    length: overlay.duration,
+    transition: { in: "fade", out: "fade" },
   }));
 
-  const mediaClips = clips.map((clip, i) => {
-    const url = clip.url || imageUrls[i];
-    const start = currentTime;
-    currentTime += clip.duration || 3.5;
-    return {
-      asset: { type: clip.type || "image", src: url },
-      start,
-      length: clip.duration || 3.5,
-      effect: clip.effect || effects[i % 4],
-      transition: { in: shotstackConfig.transition || "fadeSlow", out: shotstackConfig.transition || "fadeSlow" },
-    };
-  });
-
   const tracks = [{ clips: mediaClips }];
-
-  if (shotstackConfig.textOverlays) {
-    tracks.push({
-      clips: shotstackConfig.textOverlays.map((overlay) => ({
-        asset: {
-          type: "title",
-          text: overlay.text,
-          style: overlay.style || "minimal",
-          color: overlay.fontColor || "#ffffff",
-          size: overlay.fontSize || "medium",
-          position: overlay.position || "bottom",
-        },
-        start: overlay.start,
-        length: overlay.duration,
-        transition: { in: "fade", out: "fade" },
-      })),
-    });
+  if (textClips.length > 0) {
+    tracks.push({ clips: textClips });
   }
 
-  const timeline = { background: "#000000", tracks };
+  // ── Timeline ───────────────────────────────────────────────────────────────
+  const timeline = {
+    background: "#000000",
+    tracks,
+  };
+
   if (shotstackConfig.soundtrack) {
     timeline.soundtrack = {
       src: shotstackConfig.soundtrack,
       effect: "fadeInFadeOut",
-      volume: shotstackConfig.soundtrackVolume || 0.5,
+      volume: shotstackConfig.soundtrackVolume || 0.55,
     };
   }
 
@@ -187,9 +152,10 @@ function buildCustomPayload(shotstackConfig, imageUrls) {
   };
 }
 
+// ─── Shotstack API calls ────────────────────────────────────────────────────────
+
 async function submitRender(payload, apiKey, env) {
-  const endpoint = ENDPOINTS[env];
-  const res = await fetch(endpoint, {
+  const res = await fetch(ENDPOINTS[env], {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -198,12 +164,12 @@ async function submitRender(payload, apiKey, env) {
     body: JSON.stringify(payload),
   });
 
+  const responseText = await res.text();
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Shotstack submit failed (${res.status}): ${text}`);
+    throw new Error(`Shotstack submit failed (${res.status}): ${responseText}`);
   }
 
-  const data = await res.json();
+  const data = JSON.parse(responseText);
   return data.response.id;
 }
 
@@ -225,17 +191,28 @@ async function pollRender(renderId, apiKey, env, timeoutMs = 300000) {
     console.log(`  [Shotstack] ${renderId} → ${status}`);
 
     if (status === "done") return url;
-    if (status === "failed") throw new Error(`Render failed: ${renderId}`);
+    if (status === "failed") {
+      throw new Error(`Render échoué: ${renderId}`);
+    }
   }
 
-  throw new Error("Shotstack render timed out");
+  throw new Error("Shotstack render timed out (5min)");
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   const cli = parseArgs();
-  const env = cli.env || "sandbox";
+
+  // Charger la config
+  let config = {};
+  if (cli.config && fs.existsSync(cli.config)) {
+    config = JSON.parse(fs.readFileSync(cli.config, "utf8"));
+  }
+
+  const shotstackConfig = config.shotstack || {};
+  const env = cli.env || shotstackConfig.env || "sandbox";
+  const outputDir = config.outputDir || cli.output || "output";
 
   const apiKey =
     env === "production"
@@ -243,73 +220,77 @@ async function main() {
       : process.env.SHOTSTACK_API_KEY_SANDBOX;
 
   if (!apiKey) {
-    console.error(`ERROR: SHOTSTACK_API_KEY_${env.toUpperCase()} not set in .env`);
+    console.error(`ERROR: SHOTSTACK_API_KEY_${env.toUpperCase()} non défini.`);
     process.exit(1);
   }
 
-  // Collect image URLs
-  let imageUrls = [];
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  // ── Récupérer les URLs média ───────────────────────────────────────────────
+  let mediaUrls = [];
+  let mediaType = "image";
 
   if (cli.urls) {
-    imageUrls = cli.urls.split(",").map((u) => u.trim()).filter(Boolean);
-  } else if (cli["urls-file"]) {
-    const content = fs.readFileSync(cli["urls-file"], "utf8");
-    imageUrls = content.split("\n").map((u) => u.trim()).filter(Boolean);
-  } else if (cli.config) {
-    const config = JSON.parse(fs.readFileSync(cli.config, "utf8"));
-    if (config.shotstack && config.shotstack.clips) {
-      imageUrls = config.shotstack.clips.map((c) => c.url).filter(Boolean);
+    mediaUrls = cli.urls.split(",").map((u) => u.trim()).filter(Boolean);
+  } else {
+    // Préférer les clips Kling (vidéo) aux images statiques
+    const klingFile = path.join(outputDir, "kling-urls.txt");
+    const replicateFile = path.join(outputDir, "replicate-urls.txt");
+
+    if (fs.existsSync(klingFile)) {
+      mediaUrls = fs.readFileSync(klingFile, "utf8").split("\n").map((u) => u.trim()).filter(Boolean);
+      mediaType = "video";
+      console.log(`  Source: clips Kling animés (${mediaUrls.length} clips)`);
+    } else if (fs.existsSync(replicateFile)) {
+      mediaUrls = fs.readFileSync(replicateFile, "utf8").split("\n").map((u) => u.trim()).filter(Boolean);
+      mediaType = "image";
+      console.log(`  Source: images statiques Replicate (${mediaUrls.length} images)`);
+    } else {
+      console.error("ERROR: Aucun fichier kling-urls.txt ou replicate-urls.txt trouvé.");
+      process.exit(1);
     }
   }
 
-  if (imageUrls.length === 0) {
-    console.error("ERROR: Aucune URL d'image fournie. Utilise --urls ou --urls-file ou --config.");
+  if (mediaUrls.length === 0) {
+    console.error("ERROR: Aucune URL média trouvée.");
     process.exit(1);
-  }
-
-  // Build payload
-  let payload;
-  const preset = cli.preset || "obsidian";
-
-  if (preset === "obsidian") {
-    payload = buildObsidianPayload(imageUrls);
-  } else if (cli.config) {
-    const config = JSON.parse(fs.readFileSync(cli.config, "utf8"));
-    payload = buildCustomPayload(config.shotstack || {}, imageUrls);
-  } else {
-    payload = buildObsidianPayload(imageUrls);
   }
 
   console.log(`\nClaude-PIPE — Shotstack Assembly`);
   console.log(`  Env: ${env}`);
-  console.log(`  Images: ${imageUrls.length}`);
-  console.log(`  Preset: ${preset}\n`);
+  console.log(`  Clips: ${mediaUrls.length} (${mediaType})`);
+  console.log(`  Format: 1080x1920 (9:16) @ ${shotstackConfig.fps || 25}fps`);
+  console.log(`  Soundtrack: ${shotstackConfig.soundtrack ? "oui" : "non"}`);
+  console.log(`  Text overlays: ${(shotstackConfig.textOverlays || []).length}\n`);
 
-  // Submit render
+  // ── Build payload ──────────────────────────────────────────────────────────
+  const payload = buildPayload(mediaUrls, shotstackConfig, mediaType);
+
+  // ── Debug payload (sans les URLs complètes) ────────────────────────────────
+  const totalClips = payload.timeline.tracks.reduce((acc, t) => acc + t.clips.length, 0);
+  console.log(`  Payload: ${payload.timeline.tracks.length} tracks, ${totalClips} clips total`);
+
+  // ── Soumettre le render ────────────────────────────────────────────────────
   const renderId = await submitRender(payload, apiKey, env);
   console.log(`  Render soumis: ${renderId}`);
-  console.log(`  Polling jusqu'à la fin...\n`);
+  console.log(`  Polling toutes les 5s...\n`);
 
-  // Poll
+  // ── Attendre le résultat ───────────────────────────────────────────────────
   const videoUrl = await pollRender(renderId, apiKey, env);
-  console.log(`\n  Video prête: ${videoUrl}`);
+  console.log(`\n  ✓ Vidéo prête: ${videoUrl}`);
 
-  // Download
-  const outputDir = cli.output || "output";
-  fs.mkdirSync(outputDir, { recursive: true });
-  const filename = `montage-${Date.now()}.mp4`;
+  // ── Télécharger le MP4 ────────────────────────────────────────────────────
+  const filename = `pub-obsidian-${Date.now()}.mp4`;
   const dest = path.join(outputDir, filename);
-
   console.log(`  Téléchargement → ${dest}`);
   await downloadFile(videoUrl, dest);
-  console.log(`  Saved: ${dest}`);
+  console.log(`  ✓ Saved: ${dest}`);
 
-  // Save URL to file for reference
-  const urlFile = path.join(outputDir, "last-render-url.txt");
-  fs.writeFileSync(urlFile, videoUrl);
-  console.log(`  URL sauvegardée: ${urlFile}`);
+  // Sauvegarder l'URL du render final
+  fs.writeFileSync(path.join(outputDir, "final-video-url.txt"), videoUrl);
+  console.log(`  ✓ URL finale: ${path.join(outputDir, "final-video-url.txt")}`);
 
-  console.log("\nDone.");
+  console.log("\nDone. Vidéo finale prête.");
 }
 
 main().catch((err) => {

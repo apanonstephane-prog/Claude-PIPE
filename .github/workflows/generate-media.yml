@@ -3,33 +3,27 @@ name: Generate Media (Replicate)
 on:
   workflow_dispatch:
     inputs:
+      config:
+        description: "Fichier config dans configs/ (ex: pub-obsidian.json)"
+        required: false
+        default: "pub-obsidian.json"
       prompt:
-        description: "Prompt direct (optionnel — laisse vide pour utiliser un fichier config)"
+        description: "Prompt direct (optionnel — court-circuite le fichier config)"
         required: false
         default: ""
-      type:
-        description: "Type de média (utilisé uniquement si prompt est renseigné)"
-        required: false
-        default: "image"
-        type: choice
-        options: [image, video]
       model:
-        description: "Modèle (utilisé uniquement si prompt est renseigné)"
+        description: "Modèle image (utilisé uniquement si prompt direct)"
         required: false
-        default: "flux-schnell"
+        default: "nano-banana-pro"
         type: choice
         options:
+          - nano-banana-pro
+          - nano-banana-2
           - flux-schnell
           - flux-dev
           - sdxl
-          - nano-banana-pro
-          - nano-banana-2
-          - ltx-video
-          - kling-v2.1
-          - kling-v2.1-pro
-          - kling-3.0
       style:
-        description: "Style visuel (utilisé uniquement si prompt est renseigné)"
+        description: "Style visuel (utilisé uniquement si prompt direct)"
         required: false
         default: "cinematic"
         type: choice
@@ -41,12 +35,14 @@ on:
           - poster
           - illustration
           - logo
-      config:
-        description: "Fichier config batch dans configs/ (ex: pub-obsidian.json). Laisse vide pour tous les lancer."
+      animate:
+        description: "Animer les images avec Kling 3.0 ?"
         required: false
-        default: ""
+        default: "true"
+        type: choice
+        options: ["true", "false"]
       assemble:
-        description: "Assembler en vidéo finale avec Shotstack après la génération ?"
+        description: "Assembler en vidéo finale avec Shotstack ?"
         required: false
         default: "true"
         type: choice
@@ -65,6 +61,7 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repo
@@ -79,85 +76,84 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ── Cas 1 : prompt direct ──────────────────────────────────────────────
-      - name: Generate media (prompt direct)
-        if: ${{ github.event.inputs.prompt != '' }}
+      # ── ÉTAPE 1 : Génération images (nano-banana-pro) ──────────────────────
+      - name: "Étape 1 — Génération images (nano-banana-pro)"
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
-          node generate-images.js \
-            --prompt "${{ github.event.inputs.prompt }}" \
-            --type "${{ github.event.inputs.type }}" \
-            --model "${{ github.event.inputs.model }}" \
-            --style "${{ github.event.inputs.style }}" \
-            --output output
+          CONFIG="${{ github.event.inputs.config }}"
+          PROMPT="${{ github.event.inputs.prompt }}"
 
-      # ── Cas 2 : fichier config spécifique ─────────────────────────────────
-      - name: Generate media (fichier config spécifique)
-        if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config != '' }}
-        env:
-          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-        run: |
-          node generate-images.js --config "configs/${{ github.event.inputs.config }}"
+          if [ -n "$PROMPT" ]; then
+            echo ">>> Prompt direct"
+            node generate-images.js \
+              --prompt "$PROMPT" \
+              --type image \
+              --model "${{ github.event.inputs.model }}" \
+              --style "${{ github.event.inputs.style }}" \
+              --output output
+          elif [ -n "$CONFIG" ]; then
+            echo ">>> Config: configs/$CONFIG"
+            node generate-images.js --config "configs/$CONFIG"
+          else
+            echo ">>> Config par défaut: configs/pub-obsidian.json"
+            node generate-images.js --config "configs/pub-obsidian.json"
+          fi
 
-      # ── Cas 3 : tous les fichiers configs/ ────────────────────────────────
-      - name: Generate media (tous les configs/)
-        if: ${{ github.event.inputs.prompt == '' && github.event.inputs.config == '' }}
-        env:
-          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-        run: |
-          for f in configs/*.json; do
-            echo ">>> Traitement de $f..."
-            node generate-images.js --config "$f"
-          done
-
-      # ── Collecter les URLs générées pour Shotstack ────────────────────────
-      - name: Collecter URLs des images générées
-        if: ${{ github.event.inputs.assemble != 'false' }}
-        run: |
-          echo "Recherche des fichiers générés dans output/..."
+          echo "--- Fichiers générés ---"
           ls -la output/ || echo "Dossier output vide"
-          # Lister les fichiers PNG générés
-          find output/ -name "*.png" -o -name "*.jpg" -o -name "*.webp" 2>/dev/null | sort > output/generated-files.txt
-          cat output/generated-files.txt || echo "Aucun fichier trouvé"
+          cat output/replicate-urls.txt || echo "Pas de replicate-urls.txt"
 
-      # ── Shotstack : assemblage vidéo finale ───────────────────────────────
-      - name: Assembler vidéo finale (Shotstack)
+      # ── ÉTAPE 2 : Animation Kling 3.0 ────────────────────────────────────
+      - name: "Étape 2 — Animation Kling 3.0 (image-to-video)"
+        if: ${{ github.event.inputs.animate != 'false' }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          CONFIG="${{ github.event.inputs.config }}"
+          CONFIG="${CONFIG:-pub-obsidian.json}"
+
+          if [ -f "output/replicate-urls.txt" ]; then
+            echo ">>> Animation Kling 3.0 — $(wc -l < output/replicate-urls.txt) images"
+            node animate-images.js --config "configs/$CONFIG"
+            echo "--- Clips vidéo Kling ---"
+            ls -la output/*.mp4 2>/dev/null || echo "Pas de fichiers mp4"
+            cat output/kling-urls.txt || echo "Pas de kling-urls.txt"
+          else
+            echo "WARN: Pas de replicate-urls.txt — étape Kling ignorée"
+          fi
+
+      # ── ÉTAPE 3 : Montage Shotstack ────────────────────────────────────────
+      - name: "Étape 3 — Montage final Shotstack (MP4 15s 9:16)"
         if: ${{ github.event.inputs.assemble != 'false' }}
         env:
           SHOTSTACK_API_KEY_SANDBOX: ${{ secrets.SHOTSTACK_API_KEY_SANDBOX }}
           SHOTSTACK_API_KEY_PRODUCTION: ${{ secrets.SHOTSTACK_API_KEY_PRODUCTION }}
         run: |
           CONFIG="${{ github.event.inputs.config }}"
+          CONFIG="${CONFIG:-pub-obsidian.json}"
           ENV="${{ github.event.inputs.shotstack_env }}"
           ENV="${ENV:-sandbox}"
 
-          # Déterminer le fichier config à utiliser
-          if [ -n "$CONFIG" ]; then
-            CONFIG_PATH="configs/$CONFIG"
-          else
-            CONFIG_PATH="configs/pub-obsidian.json"
-          fi
+          echo ">>> Assemblage Shotstack — env: $ENV, config: configs/$CONFIG"
+          node assemble-video.js \
+            --config "configs/$CONFIG" \
+            --env "$ENV" \
+            --output output
 
-          echo ">>> Assemblage Shotstack avec $CONFIG_PATH (env: $ENV)"
-
-          # Récupérer les URLs Replicate depuis les logs (output sauvegardé)
-          if [ -f "output/replicate-urls.txt" ]; then
-            node assemble-video.js \
-              --urls-file output/replicate-urls.txt \
-              --config "$CONFIG_PATH" \
-              --env "$ENV" \
-              --output output
-          else
-            echo "Pas de fichier replicate-urls.txt — assemblage ignoré."
-            echo "Astuce: les URLs Replicate sont temporaires, re-lance avec --urls 'url1,url2,...'"
-          fi
+          echo "--- Résultat final ---"
+          ls -la output/*.mp4 2>/dev/null || echo "Pas de MP4 final"
+          cat output/final-video-url.txt 2>/dev/null || echo "Pas d'URL finale"
 
       # ── Upload artefacts ───────────────────────────────────────────────────
-      - name: Upload artefacts générés
+      - name: Upload tous les artefacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: media-generated-${{ github.run_number }}
-          path: output/
+          name: obsidian-pub-${{ github.run_number }}
+          path: |
+            output/*.png
+            output/*.jpg
+            output/*.mp4
+            output/*.txt
           retention-days: 30

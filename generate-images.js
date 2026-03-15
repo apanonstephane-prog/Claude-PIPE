@@ -152,21 +152,37 @@ async function main() {
     console.log(`[${req.type.toUpperCase()}] ${req.prompt.slice(0, 60)}...`);
     console.log(`  Model: ${modelId} | Style: ${req.style || "auto"}`);
 
-    const input = isVideo
-      ? {
-          prompt: enriched,
-          duration: req.duration || 5,
-          width: req.width || 1280,
-          height: req.height || 720,
-        }
-      : {
-          prompt: enriched,
-          num_outputs: req.numOutputs || 1,
-          ...(modelKey !== "flux-schnell" && {
-            width: req.width || 1024,
-            height: req.height || 1024,
-          }),
-        };
+    // nano-banana-pro / nano-banana-2 : utilisent aspect_ratio, pas width/height
+    const isGoogleModel = modelKey === "nano-banana-pro" || modelKey === "nano-banana-2";
+
+    let input;
+    if (isVideo) {
+      input = {
+        prompt: enriched,
+        duration: req.duration || 5,
+        width: req.width || 1280,
+        height: req.height || 720,
+      };
+    } else if (isGoogleModel) {
+      input = {
+        prompt: enriched,
+        aspect_ratio: req.aspectRatio || (req.width && req.height
+          ? `${req.width}:${req.height}`
+          : "9:16"),
+        number_of_images: req.numOutputs || 1,
+        output_format: "png",
+        safety_filter_level: "block_only_high",
+      };
+    } else {
+      input = {
+        prompt: enriched,
+        num_outputs: req.numOutputs || 1,
+        ...(modelKey !== "flux-schnell" && {
+          width: req.width || 1024,
+          height: req.height || 1024,
+        }),
+      };
+    }
 
     try {
       const output = await client.run(modelId, { input });

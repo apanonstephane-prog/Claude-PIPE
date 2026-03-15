@@ -1,55 +1,73 @@
 {
   "outputDir": "output",
+
   "requests": [
     {
+      "scene": 1,
+      "label": "Ouverture — l'obsidienne se brise",
       "type": "image",
-      "prompt": "A single dramatic beam of light piercing pure darkness, a professional cinema camera silhouette emerging from shadows, obsidian black stone texture background, ultra cinematic 4K, social media ad frame",
-      "model": "flux-schnell",
+      "prompt": "Extreme cinematic vertical close-up: a massive black obsidian crystal shattering in ultra slow motion, razor-sharp crystalline fragments suspended mid-air catching a single dramatic backlight beam, deep black void background, volumetric golden light rays piercing through the cracks, photorealistic 8K, 9:16 vertical composition, anamorphic lens flare",
+      "model": "nano-banana-pro",
       "style": "cinematic",
-      "width": 1080,
-      "height": 1920,
-      "numOutputs": 1
+      "aspectRatio": "9:16",
+      "numOutputs": 1,
+      "motionPrompt": "Black obsidian crystal implodes then explodes in extreme ultra slow motion, crystalline fragments spiral outward suspended in golden backlight, volumetric light bursts from fracture lines, dramatic cinematic reveal with subtle camera shake"
     },
     {
+      "scene": 2,
+      "label": "L'oeil du réalisateur",
       "type": "image",
-      "prompt": "Close-up of a film director hands holding a clapperboard on a dark cinematic set, dramatic side lighting, shallow depth of field, black and deep amber tones, professional film production, vertical format",
-      "model": "flux-schnell",
+      "prompt": "Extreme cinematic vertical close-up: a film director's eye with a full cinema camera lens perfectly reflected in the iris, deep amber and obsidian black color palette, dramatic chiaroscuro studio lighting, bokeh light trails in background, photorealistic 8K, 9:16 vertical portrait, shallow depth of field",
+      "model": "nano-banana-pro",
       "style": "cinematic",
-      "width": 1080,
-      "height": 1920,
-      "numOutputs": 1
+      "aspectRatio": "9:16",
+      "numOutputs": 1,
+      "motionPrompt": "Imperceptibly slow push-in toward the eye, city lights pulse rhythmically in the camera lens reflection inside the iris, subtle involuntary eye movement, micro-focus shift from iris to lens reflection"
     },
     {
+      "scene": 3,
+      "label": "La pellicule et l'obsidienne",
       "type": "image",
-      "prompt": "Shards of black obsidian stone exploding and transforming into cinema film strips, iridescent light reflections on black mineral surface, epic cinematic composition, dark background, vertical social media format",
-      "model": "flux-dev",
+      "prompt": "Cinematic vertical: 35mm film strips spiraling upward around a towering obsidian obelisk, each frame glowing with different scenes of life, molten gold light emanating from within the crystal core, dramatic dark atmosphere, smoke particles floating, photorealistic 8K, 9:16 vertical composition, epic scale",
+      "model": "nano-banana-pro",
       "style": "cinematic",
-      "width": 1080,
-      "height": 1920,
-      "numOutputs": 1
+      "aspectRatio": "9:16",
+      "numOutputs": 1,
+      "motionPrompt": "Film strips slowly spiral upward around the obsidian obelisk in a hypnotic motion, golden light pulses from within the crystal core in rhythm, smoke particles drift upward, extremely slow upward camera drift revealing the full obelisk height"
     },
     {
+      "scene": 4,
+      "label": "Brand reveal final",
       "type": "image",
-      "prompt": "Minimalist premium black background with elegant gold text OBSIDIAN ARTS FILMS STUDIO, subtle obsidian stone texture, tagline Chaque histoire merite d etre vue in small gold italic font, luxury cinema brand identity, vertical format",
-      "model": "nano-banana-2",
+      "prompt": "Ultra minimalist luxury brand card: pure obsidian black background with subtle stone texture, 'OBSIDIAN ARTS FILMS STUDIO' in elegant wide-tracked gold serif uppercase letters centered vertically, single thin horizontal gold rule above and below text, extreme premium cinema brand identity, 9:16 vertical format, photorealistic studio lighting on typography",
+      "model": "nano-banana-pro",
       "style": "logo",
-      "width": 1080,
-      "height": 1920,
-      "numOutputs": 1
+      "aspectRatio": "9:16",
+      "numOutputs": 1,
+      "motionPrompt": "Text materializes letter by letter emerging from pure darkness, a golden light shimmer sweeps slowly across the letters left to right, subtle breathing scale pulse on the entire composition"
     }
   ],
+
+  "kling": {
+    "model": "kling-3.0",
+    "duration": 5,
+    "aspectRatio": "9:16",
+    "negativePrompt": "blurry, low quality, watermark, text overlay, shaky camera, jump cut, overexposed"
+  },
+
   "shotstack": {
-    "preset": "obsidian",
     "env": "sandbox",
-    "clipDuration": 3.5,
+    "clipDuration": 3.75,
     "transition": "fadeSlow",
     "resolution": "hd",
     "fps": 25,
+    "soundtrack": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/unminus/ambisax.mp3",
+    "soundtrackVolume": 0.55,
     "textOverlays": [
       {
         "text": "OBSIDIAN ARTS FILMS STUDIO",
-        "start": 10,
-        "duration": 4,
+        "start": 9.5,
+        "duration": 5,
         "fontSize": "x-large",
         "fontColor": "#d4af37",
         "position": "center",
@@ -57,10 +75,10 @@
       },
       {
         "text": "Chaque histoire merite d etre vue.",
-        "start": 12,
-        "duration": 3,
+        "start": 11.5,
+        "duration": 3.5,
         "fontSize": "medium",
-        "fontColor": "#ffffff",
+        "fontColor": "#f0f0f0",
         "position": "bottom",
         "style": "minimal"
       }
