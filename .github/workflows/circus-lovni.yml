@@ -1,6 +1,11 @@
 name: "CIRCUS — L'Ovni | Génération clip"
 
 on:
+  push:
+    branches:
+      - claude/replicate-media-pipeline-pFAFZ
+    paths:
+      - "configs/circus-lovni.json"
   workflow_dispatch:
     inputs:
       scene:
