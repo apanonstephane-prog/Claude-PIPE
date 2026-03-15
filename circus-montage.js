@@ -142,6 +142,29 @@ async function main() {
     return;
   }
 
+  // Vérifier que les URLs vidéo sont accessibles
+  console.log("\nVérification des URLs vidéo...");
+  let urlErrors = 0;
+  for (const clip of clips) {
+    const url = clip.asset.src;
+    try {
+      const check = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(10000) });
+      if (!check.ok) {
+        console.error(`  ✗ URL inaccessible (${check.status}): ${url}`);
+        urlErrors++;
+      } else {
+        console.log(`  ✓ OK: ${url.substring(0, 80)}...`);
+      }
+    } catch (e) {
+      console.error(`  ✗ URL timeout/erreur: ${url}`);
+      urlErrors++;
+    }
+  }
+  if (urlErrors > 0) {
+    console.error(`\n${urlErrors} URL(s) inaccessible(s) — les URLs replicate.delivery ont peut-être expiré.`);
+    process.exit(1);
+  }
+
   // Soumettre
   console.log("\nSoumission à Shotstack sandbox...");
   const res = await fetch(SHOTSTACK_ENDPOINT, {
@@ -186,7 +209,8 @@ async function main() {
     }
 
     if (status === "failed") {
-      console.error("\nRender échoué.");
+      console.error("\nRender échoué. Détails Shotstack:");
+      console.error(JSON.stringify(statusData.response, null, 2));
       process.exit(1);
     }
   }
