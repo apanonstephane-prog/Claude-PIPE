@@ -79,7 +79,8 @@ const VIDEO_MODELS: Record<VideoModel, string> = {
   // Kling AI (Kuaishou) — video generation
   "kling-v2.1": "kwaivgi/kling-v2.1",
   "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
-  "kling-3.0": "kwaivgi/kling-3.0",
+  "kling-3.0": "kwaivgi/kling-v3-video",         // Kling Video 3.0 — jusqu'à 15s
+  "kling-v3-motion": "kwaivgi/kling-v3-motion-control",
 };
 
 // ─── Style Prompts ────────────────────────────────────────────────────────────

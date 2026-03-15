@@ -88,7 +88,8 @@ async function ingestToShotstack(videoUrl, env = "sandbox") {
 // ─── Kling model IDs ──────────────────────────────────────────────────────────
 
 const KLING_MODELS = {
-  "kling-3.0": "kwaivgi/kling-v2.1-pro",   // kling-3.0 n'existe pas sur Replicate → fallback v2.1-pro
+  "kling-3.0": "kwaivgi/kling-v3-video",        // Kling Video 3.0 — jusqu'à 15s, cinématique
+  "kling-v3-motion": "kwaivgi/kling-v3-motion-control", // Kling 3.0 motion control
   "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
   "kling-v2.1": "kwaivgi/kling-v2.1",
 };
