@@ -74,7 +74,11 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
     const start = currentStart;
     currentStart += clipDuration;
 
-    const isVideo = mediaType === "video" || url.includes(".mp4") || url.includes("video");
+    // Déterminer le type réel depuis les métadonnées ou heuristiques
+    const meta = shotstackConfig._mediaMeta;
+    const isVideo = meta
+      ? meta[i]?.type === "video"
+      : mediaType === "video" || url.includes(".mp4");
 
     const clip = {
       asset: isVideo
@@ -82,16 +86,13 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
         : { type: "image", src: url },
       start,
       length: clipDuration,
-      ...(isVideo ? {} : { fit: "cover" }),
       transition: { in: "fade", out: "fade" },
     };
 
     if (!isVideo) {
+      clip.fit = "cover";
       clip.effect = kenBurnsEffects[i % kenBurnsEffects.length];
     }
-
-    // Nettoyer les undefined
-    Object.keys(clip).forEach((k) => clip[k] === undefined && delete clip[k]);
 
     return clip;
   });
@@ -228,7 +229,17 @@ async function main() {
     const klingFile = path.join(outputDir, "kling-urls.txt");
     const replicateFile = path.join(outputDir, "replicate-urls.txt");
 
-    if (fs.existsSync(klingFile)) {
+    const metaFile = path.join(outputDir, "kling-meta.json");
+    if (fs.existsSync(metaFile)) {
+      // Utiliser les métadonnées type réel par URL
+      const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
+      mediaUrls = meta.map((m) => m.url);
+      // mediaType sera déterminé par URL dans buildPayload
+      mediaType = "mixed";
+      console.log(`  Source: metadata Kling (${meta.filter(m=>m.type==="video").length} vidéos, ${meta.filter(m=>m.type==="image").length} images)`);
+      // Passer la meta complète à buildPayload
+      shotstackConfig._mediaMeta = meta;
+    } else if (fs.existsSync(klingFile)) {
       mediaUrls = fs.readFileSync(klingFile, "utf8").split("\n").map((u) => u.trim()).filter(Boolean);
       mediaType = "video";
       console.log(`  Source: clips Kling animés (${mediaUrls.length} clips)`);

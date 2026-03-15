@@ -88,7 +88,7 @@ async function ingestToShotstack(videoUrl, env = "sandbox") {
 // ─── Kling model IDs ──────────────────────────────────────────────────────────
 
 const KLING_MODELS = {
-  "kling-3.0": "kwaivgi/kling-3.0",
+  "kling-3.0": "kwaivgi/kling-v2.1-pro",   // kling-3.0 n'existe pas sur Replicate → fallback v2.1-pro
   "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
   "kling-v2.1": "kwaivgi/kling-v2.1",
 };
@@ -200,6 +200,12 @@ async function main() {
   const videoUrls = [];
 
   for (let i = 0; i < imageUrls.length; i++) {
+    // Délai entre requêtes pour éviter le rate limit Replicate (429)
+    if (i > 0) {
+      console.log(`  Attente 15s (rate limit)...`);
+      await new Promise((r) => setTimeout(r, 15000));
+    }
+
     const imageUrl = imageUrls[i];
     const motionPrompt = motionPrompts[i] || `Cinematic slow motion, smooth camera movement, dramatic atmospheric lighting, ultra high quality`;
 
@@ -228,29 +234,32 @@ async function main() {
         const shotstackEnv = config.shotstack?.env || "sandbox";
         console.log(`  Ingest Shotstack (${shotstackEnv})...`);
         const cdnUrl = await ingestToShotstack(videoUrl, shotstackEnv);
-        const finalUrl = cdnUrl || videoUrl; // fallback sur URL Replicate si ingest échoue
-        videoUrls.push(finalUrl);
+        const finalUrl = cdnUrl || videoUrl;
+        videoUrls.push({ url: finalUrl, type: "video" });
 
-        // Télécharger le clip en local aussi
+        // Télécharger le clip en local
         const filename = `scene-${i + 1}-${Date.now()}.mp4`;
         const dest = path.join(outputDir, filename);
         await downloadFile(videoUrl, dest);
         console.log(`  Saved: ${dest}`);
       } else {
-        console.error(`  WARN: URL inattendue — ${videoUrl}`);
-        videoUrls.push(imageUrl);
+        console.error(`  WARN: URL inattendue — fallback image`);
+        videoUrls.push({ url: imageUrl, type: "image" });
       }
     } catch (err) {
       console.error(`  ERROR Kling scène ${i + 1}: ${err.message}`);
-      // Fallback: garder l'image si Kling échoue pour ne pas bloquer le montage
-      videoUrls.push(imageUrl);
+      // Fallback image — Shotstack utilisera l'image avec Ken Burns
+      videoUrls.push({ url: imageUrl, type: "image" });
     }
   }
 
-  // Sauvegarder les URLs vidéo pour Shotstack
+  // Sauvegarder les URLs + metadata type pour Shotstack
   const videoUrlsFile = path.join(outputDir, "kling-urls.txt");
-  fs.writeFileSync(videoUrlsFile, videoUrls.join("\n"));
-  console.log(`\n  URLs vidéo sauvegardées: ${videoUrlsFile} (${videoUrls.length})`);
+  const metaFile = path.join(outputDir, "kling-meta.json");
+  fs.writeFileSync(videoUrlsFile, videoUrls.map((v) => v.url).join("\n"));
+  fs.writeFileSync(metaFile, JSON.stringify(videoUrls, null, 2));
+  console.log(`\n  URLs sauvegardées: ${videoUrlsFile} (${videoUrls.length})`);
+  console.log(`  Metadata: ${metaFile}`);
   console.log("\nDone.");
 }
 
