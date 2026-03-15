@@ -227,14 +227,21 @@ async function main() {
     const klingFile = path.join(outputDir, "kling-urls.txt");
     const replicateFile = path.join(outputDir, "replicate-urls.txt");
 
-    const metaFile = path.join(outputDir, "kling-meta.json");
+    // Priorité : lipsync-meta.json > kling-meta.json (lipsync remplace certains clips)
+    const lipsyncMetaFile = path.join(outputDir, "lipsync-meta.json");
+    const metaFile = fs.existsSync(lipsyncMetaFile)
+      ? lipsyncMetaFile
+      : path.join(outputDir, "kling-meta.json");
+
     if (fs.existsSync(metaFile)) {
       // Utiliser les métadonnées type réel par URL
       const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
       mediaUrls = meta.map((m) => m.url);
       // mediaType sera déterminé par URL dans buildPayload
       mediaType = "mixed";
-      console.log(`  Source: metadata Kling (${meta.filter(m=>m.type==="video").length} vidéos, ${meta.filter(m=>m.type==="image").length} images)`);
+      const lipsyncCount = meta.filter(m => m.lipsync).length;
+      const sourceLabel = fs.existsSync(lipsyncMetaFile) ? "lipsync-meta" : "kling-meta";
+      console.log(`  Source: ${sourceLabel} (${meta.filter(m=>m.type==="video").length} vidéos, ${meta.filter(m=>m.type==="image").length} images${lipsyncCount > 0 ? `, ${lipsyncCount} lipsync` : ""})`);
       // Passer la meta complète à buildPayload
       shotstackConfig._mediaMeta = meta;
     } else if (fs.existsSync(klingFile)) {

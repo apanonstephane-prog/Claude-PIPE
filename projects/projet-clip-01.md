@@ -25,6 +25,8 @@
 - **BPM** : À détecter depuis le fichier audio
 - **Rythme** : Calculé automatiquement selon BPM
 - **Modèles** : nano-banana-pro (images CREF) + kling-v3-video (animation)
+- **Lipsync** : Oui — moments clés uniquement (refrain, pont/drop) via LatentSync (bytedance/latentsync)
+- **Règle lipsync** : Gros plan et plan moyen uniquement — marqués `lipsync: true` + `audioStart` dans la config
 
 ## 5. À FOURNIR PAR LE CLIENT
 - [ ] Photo de référence (CREF) — 1 minimum, 3+ recommandé

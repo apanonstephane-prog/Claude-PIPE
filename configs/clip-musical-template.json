@@ -1,0 +1,117 @@
+{
+  "_comment": "Template config clip musical — copier et adapter pour chaque projet",
+
+  "outputDir": "output",
+
+  "requests": [
+    {
+      "_scene": 1,
+      "_type_plan": "plan_large",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "Atmospheric establishing shot, dark stage with dramatic spotlight, fog machine, cinematic wide angle, ultra detailed",
+      "motionPrompt": "Slow cinematic push in, fog drifting across the stage, spotlight intensifies, ultra high quality",
+      "lipsync": false
+    },
+    {
+      "_scene": 2,
+      "_type_plan": "gros_plan",
+      "_note": "Lipsync activé — refrain, début à 32 secondes dans le morceau",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "Extreme close-up portrait of [ARTISTE], dramatic side lighting, dark background, intense gaze, cinematic film grain",
+      "motionPrompt": "Slow subtle camera drift, face illuminated by shifting light, micro expressions, cinematic breathing",
+      "lipsync": true,
+      "audioStart": 32,
+      "audioDuration": 5
+    },
+    {
+      "_scene": 3,
+      "_type_plan": "plan_moyen",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "[ARTISTE] medium shot, performing on stage, dark moody atmosphere, dramatic backlighting, cinematic",
+      "motionPrompt": "Slow zoom out from medium shot to reveal stage, dramatic lighting shift, cinematic movement",
+      "lipsync": false
+    },
+    {
+      "_scene": 4,
+      "_type_plan": "plan_coupe",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "Close-up insert shot, hands on microphone, knuckles lit by stage light, dark moody cinematic",
+      "motionPrompt": "Extreme close-up slow motion hands gripping mic, light reflections, cinematic",
+      "lipsync": false
+    },
+    {
+      "_scene": 5,
+      "_type_plan": "gros_plan",
+      "_note": "Lipsync activé — pont/drop, début à 75 secondes dans le morceau",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "Close-up portrait [ARTISTE], eyes closed then opening, dramatic epic lighting, dark cinematic atmosphere",
+      "motionPrompt": "Face slowly revealed by shifting light, eyes open dramatically, ultra cinematic slow motion",
+      "lipsync": true,
+      "audioStart": 75,
+      "audioDuration": 5
+    },
+    {
+      "_scene": 6,
+      "_type_plan": "plan_large",
+      "type": "image",
+      "model": "nano-banana-pro",
+      "style": "cinematic",
+      "aspectRatio": "16:9",
+      "prompt": "Epic wide shot, [ARTISTE] silhouette against dramatic backlit stage, crowd blur in foreground, cinematic",
+      "motionPrompt": "Slow crane shot pulling back to reveal full stage, silhouette against light, epic scale",
+      "lipsync": false
+    }
+  ],
+
+  "kling": {
+    "model": "kling-3.0",
+    "duration": 5,
+    "aspectRatio": "16:9",
+    "negativePrompt": "blurry, shaky, low quality, jump cut, overexposed, watermark"
+  },
+
+  "lipsync": {
+    "enabled": true,
+    "model": "latentsync",
+    "audioFile": "audio/morceau.mp3",
+    "defaultClipDuration": 5,
+    "inferenceSteps": 25,
+    "guidanceScale": 1.5
+  },
+
+  "shotstack": {
+    "env": "sandbox",
+    "clipDuration": 5,
+    "resolution": "hd",
+    "fps": 25,
+    "soundtrack": "audio/morceau.mp3",
+    "soundtrackVolume": 1.0,
+    "textOverlays": [
+      {
+        "_note": "Titre artiste — à personnaliser",
+        "text": "[NOM ARTISTE]",
+        "style": "minimal",
+        "fontColor": "#ffffff",
+        "fontSize": "x-large",
+        "position": "bottom",
+        "start": 2,
+        "duration": 4
+      }
+    ]
+  }
+}

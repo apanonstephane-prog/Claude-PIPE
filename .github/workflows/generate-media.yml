@@ -53,6 +53,12 @@ on:
         default: "sandbox"
         type: choice
         options: [sandbox, production]
+      lipsync:
+        description: "Appliquer lipsync sur les moments clés ? (nécessite lipsync.enabled dans la config)"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
       skip_generation:
         description: "Sauter étapes 1 et 2 (réutiliser les vidéos déjà ingérées sur Shotstack)"
         required: false
@@ -146,6 +152,27 @@ jobs:
             cat output/kling-urls.txt || echo "Pas de kling-urls.txt"
           else
             echo "WARN: Pas de replicate-urls.txt — étape Kling ignorée"
+          fi
+
+      # ── ÉTAPE 2.5 : Lipsync sur moments clés ─────────────────────────────────
+      - name: "Étape 2.5 — Lipsync moments clés (LatentSync)"
+        if: ${{ github.event.inputs.lipsync != 'false' && github.event.inputs.skip_generation != 'true' }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          CONFIG="${{ github.event.inputs.config }}"
+          CONFIG="${CONFIG:-pub-obsidian.json}"
+
+          # Installer ffmpeg pour l'extraction audio
+          sudo apt-get install -y ffmpeg -q
+
+          if [ -f "output/kling-meta.json" ]; then
+            echo ">>> Lipsync — config: configs/$CONFIG"
+            node lipsync-scenes.js --config "configs/$CONFIG"
+            echo "--- Résultat lipsync ---"
+            cat output/lipsync-meta.json 2>/dev/null || echo "Pas de lipsync-meta.json"
+          else
+            echo "WARN: Pas de kling-meta.json — étape lipsync ignorée"
           fi
 
       # ── ÉTAPE 3 : Montage Shotstack ────────────────────────────────────────
