@@ -1,4 +1,12 @@
 import Replicate from "replicate";
+import {
+  buildNanoBananaPrompt,
+  buildKling3Prompt,
+  CINEMA_MODIFIERS,
+  MasterPromptOptions,
+} from "./master-prompt";
+
+export { buildNanoBananaPrompt, buildKling3Prompt, MasterPromptOptions };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,7 +31,8 @@ export type VideoModel =
   | "video-01"
   | "kling-v2.1"
   | "kling-v2.1-pro"
-  | "kling-3.0";
+  | "kling-3.0"       // V3 — cinéma prompt-driven, jusqu'à 15s
+  | "kling-3.0-omni"; // O3 — native audio + multi-shot + Elements system, jusqu'à 30s
 
 export interface GenerationContext {
   projectName?: string;
@@ -41,6 +50,8 @@ export interface ImageRequest {
   height?: number;
   numOutputs?: number;
   context?: GenerationContext;
+  /** Passer un MasterPromptOptions pour construire un prompt cinéma optimal */
+  masterPrompt?: MasterPromptOptions;
 }
 
 export interface VideoRequest {
@@ -51,6 +62,8 @@ export interface VideoRequest {
   width?: number;
   height?: number;
   context?: GenerationContext;
+  /** Passer un MasterPromptOptions pour construire un prompt Kling 3.0 optimal */
+  masterPrompt?: MasterPromptOptions;
 }
 
 export interface MediaResult {
@@ -79,26 +92,23 @@ const VIDEO_MODELS: Record<VideoModel, string> = {
   // Kling AI (Kuaishou) — video generation
   "kling-v2.1": "kwaivgi/kling-v2.1",
   "kling-v2.1-pro": "kwaivgi/kling-v2.1-pro",
-  "kling-3.0": "kwaivgi/kling-v3-video",         // Kling Video 3.0 — jusqu'à 15s
+  "kling-3.0": "kwaivgi/kling-v3-video",           // V3 — cinéma prompt-driven, 15s max
+  "kling-3.0-omni": "kwaivgi/kling-video-3-omni",  // O3 — audio natif + Elements, 30s max
   "kling-v3-motion": "kwaivgi/kling-v3-motion-control",
 };
 
 // ─── Style Prompts ────────────────────────────────────────────────────────────
+// Utilise CINEMA_MODIFIERS depuis master-prompt pour les styles cinéma.
+// Les autres styles gardent leurs modificateurs spécifiques.
 
 const STYLE_MODIFIERS: Record<VisualStyle, string> = {
-  cinematic:
-    "cinematic shot, dramatic lighting, film grain, widescreen aspect ratio, movie still",
-  photorealistic:
-    "photorealistic, ultra-detailed, 8k resolution, real photograph, natural lighting",
-  documentary:
-    "documentary photography, candid shot, journalistic style, natural light, raw authentic",
-  abstract:
-    "abstract art, bold geometric shapes, vivid colors, modern design, conceptual",
-  poster:
-    "poster design, bold typography space, high contrast, graphic design, print-ready",
-  illustration:
-    "digital illustration, artistic style, detailed artwork, vibrant colors, professional design",
-  logo: "logo design, clean vector style, minimal, professional brand identity, scalable",
+  cinematic: CINEMA_MODIFIERS.cinematic,
+  photorealistic: CINEMA_MODIFIERS.photorealistic,
+  documentary: CINEMA_MODIFIERS.documentary,
+  abstract: CINEMA_MODIFIERS.abstract,
+  poster: CINEMA_MODIFIERS.poster,
+  illustration: CINEMA_MODIFIERS.illustration,
+  logo: CINEMA_MODIFIERS.logo,
 };
 
 // ─── Context Analysis ─────────────────────────────────────────────────────────
@@ -146,18 +156,30 @@ export class ReplicateMediaPipeline {
   async generateImage(request: ImageRequest): Promise<MediaResult> {
     const model = request.model ?? "flux-schnell";
     const style = request.style ?? detectStyle(request.context ?? {});
-    const enriched = enrichPrompt(request.prompt, style);
     const modelId = IMAGE_MODELS[model];
 
-    const input: Record<string, unknown> = {
-      prompt: enriched,
-      num_outputs: request.numOutputs ?? 1,
-    };
+    // masterPrompt prend la priorité sur le prompt texte brut
+    const isGoogleModel = model === "nano-banana-pro" || model === "nano-banana-2";
+    const enriched = request.masterPrompt
+      ? buildNanoBananaPrompt(request.masterPrompt)
+      : enrichPrompt(request.prompt, style);
 
-    if (model !== "flux-schnell") {
-      input.width = request.width ?? 1024;
-      input.height = request.height ?? 1024;
-    }
+    const input: Record<string, unknown> = isGoogleModel
+      ? {
+          prompt: enriched,
+          aspect_ratio: request.masterPrompt?.ratio ?? "16:9",
+          number_of_images: request.numOutputs ?? 1,
+          output_format: "png",
+          safety_filter_level: "block_only_high",
+        }
+      : {
+          prompt: enriched,
+          num_outputs: request.numOutputs ?? 1,
+          ...(model !== "flux-schnell" && {
+            width: request.width ?? 1024,
+            height: request.height ?? 1024,
+          }),
+        };
 
     const output = await this.client.run(modelId as `${string}/${string}`, {
       input,
@@ -180,14 +202,45 @@ export class ReplicateMediaPipeline {
   async generateVideo(request: VideoRequest): Promise<MediaResult> {
     const model = request.model ?? "ltx-video";
     const style = request.style ?? detectStyle(request.context ?? {});
-    const enriched = enrichPrompt(request.prompt, style);
     const modelId = VIDEO_MODELS[model];
+
+    // masterPrompt prend la priorité — Kling 3.0 V3/O3 supporte multi-shot et Elements
+    const isKling3 = model === "kling-3.0" || model === "kling-3.0-omni";
+    const isKlingOmni = model === "kling-3.0-omni";
+    const enriched = request.masterPrompt
+      ? buildKling3Prompt(request.masterPrompt)
+      : enrichPrompt(request.prompt, style);
+
+    const duration = request.masterPrompt?.duration ?? request.duration ?? 5;
+    const mp = request.masterPrompt;
+
+    // Elements O3 : si des personnages de référence sont définis
+    const elementImages = isKlingOmni && mp?.elements
+      ? mp.elements.reduce<Record<string, string[]>>((acc, el) => {
+          acc[el.tag] = el.imageUrls;
+          return acc;
+        }, {})
+      : undefined;
+
+    const characterOrientation = isKlingOmni && mp?.elements?.[0]?.characterOrientation;
 
     const input: Record<string, unknown> = {
       prompt: enriched,
-      duration: request.duration ?? 5,
-      width: request.width ?? 1280,
-      height: request.height ?? 720,
+      duration,
+      ...(isKling3
+        ? {
+            aspect_ratio: mp?.ratio ?? "16:9",
+            mode: "pro",
+            ...(isKlingOmni && {
+              generate_audio: mp?.generateAudio ?? true,
+              ...(elementImages && { elements: elementImages }),
+              ...(characterOrientation && { character_orientation: characterOrientation }),
+            }),
+          }
+        : {
+            width: request.width ?? 1280,
+            height: request.height ?? 720,
+          }),
     };
 
     const output = await this.client.run(modelId as `${string}/${string}`, {
