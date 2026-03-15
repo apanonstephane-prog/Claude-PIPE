@@ -1,5 +1,6 @@
 {
-  "_comment": "Template config clip musical — copier et adapter pour chaque projet",
+  "_comment": "Template clip musical SOTA 2026 — Kling v3 multi-shot (6 shots × 15s) + BPM-sync + lipsync moments clés",
+  "_workflow": "nano-banana-pro → Kling v3 multi-shot 15s → LatentSync → Shotstack BPM-cut → MP4",
 
   "outputDir": "output",
 
@@ -7,111 +8,170 @@
     {
       "_scene": 1,
       "_type_plan": "plan_large",
+      "_bpm_position": "intro",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
-      "prompt": "Atmospheric establishing shot, dark stage with dramatic spotlight, fog machine, cinematic wide angle, ultra detailed",
-      "motionPrompt": "Slow cinematic push in, fog drifting across the stage, spotlight intensifies, ultra high quality",
+      "prompt": "Atmospheric wide establishing shot, dark concert stage with dramatic spotlight, fog machine, cinematic, ultra detailed",
+      "multiShotPrompts": [
+        "Extreme wide shot — dark stage emerges from black, spotlight cuts through fog, slow cinematic push in, ultra quality",
+        "Stage fills frame — fog swirls around performer silhouette, camera drifts left, dramatic atmospheric lighting",
+        "Low angle wide shot looking up at stage light array, beams cutting through smoke, cinematic lens flare",
+        "Aerial drift down toward stage, crowd blur in foreground, hero silhouette under single spotlight, epic scale"
+      ],
       "lipsync": false
     },
     {
       "_scene": 2,
       "_type_plan": "gros_plan",
-      "_note": "Lipsync activé — refrain, début à 32 secondes dans le morceau",
+      "_bpm_position": "couplet_1",
+      "_note": "LIPSYNC ACTIVÉ — couplet 1, démarre à 15s dans le morceau",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
-      "prompt": "Extreme close-up portrait of [ARTISTE], dramatic side lighting, dark background, intense gaze, cinematic film grain",
-      "motionPrompt": "Slow subtle camera drift, face illuminated by shifting light, micro expressions, cinematic breathing",
+      "prompt": "Extreme close-up portrait of [ARTISTE], dramatic side lighting, dark background, intense gaze, cinematic film grain, high contrast",
+      "multiShotPrompts": [
+        "ECU — eyes closed, face still, side-lit by warm amber, camera holds, breath visible",
+        "Eyes slowly open, direct gaze to camera, slight jaw tension, light shifts cold to warm",
+        "Profile close-up — jaw line, ear, neck tension, camera circles slowly, dark cinematic",
+        "Full face close-up — intense expression, lips moving, dramatic rim lighting, film grain",
+        "ECU lips — precise lip movement, warm key light, dark background, ultra sharp",
+        "Pull back slightly to tight close-up, face fills frame, emotional peak expression"
+      ],
       "lipsync": true,
-      "audioStart": 32,
-      "audioDuration": 5
+      "audioStart": 15,
+      "audioDuration": 15
     },
     {
       "_scene": 3,
       "_type_plan": "plan_moyen",
+      "_bpm_position": "couplet_1_suite",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
       "prompt": "[ARTISTE] medium shot, performing on stage, dark moody atmosphere, dramatic backlighting, cinematic",
-      "motionPrompt": "Slow zoom out from medium shot to reveal stage, dramatic lighting shift, cinematic movement",
+      "multiShotPrompts": [
+        "Medium shot — performer centered, backlit silhouette, slow zoom in, smoke around feet",
+        "Three-quarter angle — performer turns slightly, hand gesture, dramatic side light",
+        "Waist-up shot — stage background blurs, performer sharpens, camera pushes forward",
+        "Medium close-up — upper body, microphone in hand, sweat glistens under stage light"
+      ],
       "lipsync": false
     },
     {
       "_scene": 4,
       "_type_plan": "plan_coupe",
+      "_bpm_position": "pre_refrain",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
-      "prompt": "Close-up insert shot, hands on microphone, knuckles lit by stage light, dark moody cinematic",
-      "motionPrompt": "Extreme close-up slow motion hands gripping mic, light reflections, cinematic",
+      "prompt": "Insert shots — hands on microphone, knuckles lit by stage light, dark moody cinematic, sharp detail",
+      "multiShotPrompts": [
+        "ECU hands gripping microphone, knuckles lit from below, dark background, slow motion",
+        "Side view hands + mic stand, fog drifting past, atmospheric stage light",
+        "ECU mouth close to mic, breath fog, rim-lit lips, extreme slow motion",
+        "Wide knuckles shot — fingers tense, veins visible, single warm spotlight"
+      ],
       "lipsync": false
     },
     {
       "_scene": 5,
       "_type_plan": "gros_plan",
-      "_note": "Lipsync activé — pont/drop, début à 75 secondes dans le morceau",
+      "_bpm_position": "refrain",
+      "_note": "LIPSYNC ACTIVÉ — refrain, démarre à 60s dans le morceau",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
-      "prompt": "Close-up portrait [ARTISTE], eyes closed then opening, dramatic epic lighting, dark cinematic atmosphere",
-      "motionPrompt": "Face slowly revealed by shifting light, eyes open dramatically, ultra cinematic slow motion",
+      "prompt": "Close-up portrait [ARTISTE], powerful emotional expression, epic dramatic lighting, dark cinematic atmosphere, film grain",
+      "multiShotPrompts": [
+        "Tight close-up — performer singing, full emotional commitment, cold dramatic lighting",
+        "ECU — eyes intense, lips moving with power, light flares across face",
+        "Medium close-up — performer leans into camera, passion visible, stage glow behind",
+        "Close-up — jaw, neck, collarbone — physical intensity of performance",
+        "ECU lips again — peak lyrics, perfectly synced, ultra sharp warm light",
+        "Pull back from ECU to medium close-up in one fluid move, revealing full emotion"
+      ],
       "lipsync": true,
-      "audioStart": 75,
-      "audioDuration": 5
+      "audioStart": 60,
+      "audioDuration": 15
     },
     {
       "_scene": 6,
       "_type_plan": "plan_large",
+      "_bpm_position": "pont",
       "type": "image",
       "model": "nano-banana-pro",
       "style": "cinematic",
       "aspectRatio": "16:9",
-      "prompt": "Epic wide shot, [ARTISTE] silhouette against dramatic backlit stage, crowd blur in foreground, cinematic",
-      "motionPrompt": "Slow crane shot pulling back to reveal full stage, silhouette against light, epic scale",
+      "prompt": "Epic wide shot, [ARTISTE] silhouette against dramatic backlit stage, crowd blur in foreground, cinematic, epic scale",
+      "multiShotPrompts": [
+        "Extreme wide — performer tiny against massive stage light array, slow pull back",
+        "Low angle wide — performer stands tall, stage lights like wings behind, epic",
+        "High angle bird's eye — performer center stage, spotlight island in darkness",
+        "Final wide — full reveal of stage scale, crowd in silhouette, peak dramatic moment"
+      ],
       "lipsync": false
     }
   ],
 
   "kling": {
     "model": "kling-3.0",
-    "duration": 5,
+    "duration": 15,
+    "mode": "pro",
+    "multiShot": true,
     "aspectRatio": "16:9",
-    "negativePrompt": "blurry, shaky, low quality, jump cut, overexposed, watermark"
+    "negativePrompt": "blurry, shaky, low quality, jump cut, overexposed, watermark, text overlay"
   },
 
   "lipsync": {
     "enabled": true,
     "model": "latentsync",
     "audioFile": "audio/morceau.mp3",
-    "defaultClipDuration": 5,
+    "defaultClipDuration": 15,
     "inferenceSteps": 25,
     "guidanceScale": 1.5
   },
 
   "shotstack": {
     "env": "sandbox",
-    "clipDuration": 5,
+    "_bpm_note": "Renseigner BPM réel — clipDuration calculé automatiquement sur noire=60/BPM",
+    "_bpm": 90,
+    "_pattern": "noire, noire, croche, croche, croche, croche, blanche",
+    "clipDuration": 0.67,
     "resolution": "hd",
     "fps": 25,
     "soundtrack": "audio/morceau.mp3",
     "soundtrackVolume": 1.0,
     "textOverlays": [
       {
-        "_note": "Titre artiste — à personnaliser",
         "text": "[NOM ARTISTE]",
         "style": "minimal",
         "fontColor": "#ffffff",
         "fontSize": "x-large",
         "position": "bottom",
         "start": 2,
-        "duration": 4
+        "duration": 3
       }
     ]
+  },
+
+  "_cost_estimate": {
+    "_note": "Estimations mars 2026 sur Replicate",
+    "per_run": {
+      "nano_banana_pro": "$0.06/image",
+      "kling_v3_15s_pro": "$0.90-1.10/run (6 shots × 15s)",
+      "latentsync_15s": "$0.15-0.25/run"
+    },
+    "this_config_6_scenes": {
+      "nano_banana_pro_x6": "~$0.36",
+      "kling_v3_x6": "~$5.70",
+      "latentsync_x2": "~$0.40",
+      "total": "~$6.50"
+    }
   }
 }

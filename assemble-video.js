@@ -64,39 +64,60 @@ const ENDPOINTS = {
 
 function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
   const clipDuration = shotstackConfig.clipDuration || 3.75;
-  // Pas de fondu enchaîné par défaut — coupes sèches
+  // Pas de fondu enchaîné — coupes sèches (rythme BPM)
   const kenBurnsEffects = ["zoomIn", "zoomOut", "slideLeft", "slideRight"];
+  const meta = shotstackConfig._mediaMeta;
 
   let currentStart = 0;
+  const mediaClips = [];
 
-  // ── Track 1 : clips média (vidéo ou image) ─────────────────────────────────
-  const mediaClips = mediaUrls.map((url, i) => {
-    const start = currentStart;
-    currentStart += clipDuration;
-
-    // Déterminer le type réel depuis les métadonnées ou heuristiques
-    const meta = shotstackConfig._mediaMeta;
-    const isVideo = meta
-      ? meta[i]?.type === "video"
+  // ── Track 1 : clips média — gestion multi-shot native Kling v3 ───────────
+  for (let i = 0; i < mediaUrls.length; i++) {
+    const url = mediaUrls[i];
+    const clipMeta = meta ? meta[i] : null;
+    const isVideo = clipMeta
+      ? clipMeta.type === "video"
       : mediaType === "video" || url.includes(".mp4");
 
-    const clip = {
-      asset: isVideo
-        ? { type: "video", src: url }
-        : { type: "image", src: url },
-      start,
-      length: clipDuration,
-    };
+    // Multi-shot : un clip 15s Kling est découpé en N sous-clips aux timestamps BPM
+    const shotsCount = clipMeta?.shotsCount || 1;
+    const shotDuration = clipMeta?.shotDuration || clipDuration;
 
-    if (!isVideo) {
-      clip.fit = "cover";
-      clip.effect = kenBurnsEffects[i % kenBurnsEffects.length];
+    if (isVideo && shotsCount > 1) {
+      // Découper le clip multi-shot en shots individuels calés sur le BPM
+      for (let s = 0; s < shotsCount; s++) {
+        const trimStart = parseFloat((s * shotDuration).toFixed(3));
+        mediaClips.push({
+          asset: {
+            type: "video",
+            src: url,
+            trim: trimStart,         // offset de lecture dans le clip source
+          },
+          start: parseFloat(currentStart.toFixed(3)),
+          length: parseFloat(clipDuration.toFixed(3)),
+        });
+        currentStart += clipDuration;
+      }
+    } else {
+      // Single-shot classique (vidéo ou image)
+      const clip = {
+        asset: isVideo
+          ? { type: "video", src: url }
+          : { type: "image", src: url },
+        start: parseFloat(currentStart.toFixed(3)),
+        length: parseFloat(clipDuration.toFixed(3)),
+      };
+      if (!isVideo) {
+        clip.fit = "cover";
+        clip.effect = kenBurnsEffects[i % kenBurnsEffects.length];
+      }
+      mediaClips.push(clip);
+      currentStart += clipDuration;
     }
-
-    return clip;
-  });
+  }
 
   const totalDuration = currentStart;
+  console.log(`  Timeline: ${mediaClips.length} coupes | Durée totale: ${totalDuration.toFixed(2)}s`);
 
   // ── Track 2 : overlays texte synchronisés ─────────────────────────────────
   const textClips = (shotstackConfig.textOverlays || []).map((overlay) => ({

@@ -156,7 +156,10 @@ async function main() {
   const klingConfig = config.kling || {};
   const modelKey = klingConfig.model || "kling-3.0";
   const modelId = KLING_MODELS[modelKey] || KLING_MODELS["kling-3.0"];
-  const duration = klingConfig.duration || 5;
+  // Multi-shot : 15s max avec Kling v3 (6 shots par génération)
+  const duration = klingConfig.duration || (klingConfig.multiShot ? 15 : 5);
+  const multiShot = klingConfig.multiShot || false;
+  const mode = klingConfig.mode || "pro"; // pro = 1080p, standard = 720p
   const aspectRatio = klingConfig.aspectRatio || "9:16";
   const negativePrompt = klingConfig.negativePrompt || "blurry, shaky, low quality";
   const outputDir = config.outputDir || "output";
@@ -183,7 +186,10 @@ async function main() {
   }
 
   // ── Récupérer les motion prompts depuis la config ──────────────────────────
+  // Multi-shot : chaque requête peut avoir un tableau multiShotPrompts (6 max)
+  // Single-shot : motionPrompt classique
   let motionPrompts = [];
+  let multiShotPromptSets = []; // tableau de tableaux pour multi-shot
 
   if (cli.motion) {
     motionPrompts = cli.motion.split("|");
@@ -191,12 +197,19 @@ async function main() {
     motionPrompts = config.requests
       .filter((r) => r.motionPrompt)
       .map((r) => r.motionPrompt);
+    if (multiShot) {
+      multiShotPromptSets = config.requests.map((r) =>
+        r.multiShotPrompts || (r.motionPrompt ? [r.motionPrompt] : null)
+      );
+    }
   }
 
-  console.log(`\nClaude-PIPE — Kling 3.0 Image-to-Video`);
-  console.log(`  Model: ${modelId}`);
+  console.log(`\nClaude-PIPE — Kling v3 Image-to-Video${multiShot ? " [MULTI-SHOT]" : ""}`);
+  console.log(`  Model: ${modelId} | Mode: ${mode}`);
   console.log(`  Images: ${imageUrls.length}`);
-  console.log(`  Duration: ${duration}s | Aspect: ${aspectRatio}\n`);
+  console.log(`  Duration: ${duration}s | Aspect: ${aspectRatio}`);
+  if (multiShot) console.log(`  Multi-shot: jusqu'à 6 shots/génération × ${duration}s = SOTA`);
+  console.log("");
 
   const videoUrls = [];
 
@@ -210,19 +223,47 @@ async function main() {
     const imageUrl = imageUrls[i];
     const motionPrompt = motionPrompts[i] || `Cinematic slow motion, smooth camera movement, dramatic atmospheric lighting, ultra high quality`;
 
-    console.log(`[${i + 1}/${imageUrls.length}] Scène ${i + 1}`);
-    console.log(`  Image: ${imageUrl.slice(0, 80)}...`);
-    console.log(`  Motion: ${motionPrompt.slice(0, 80)}...`);
+    console.log(`[${i + 1}/${imageUrls.length}] Génération ${i + 1}`);
+    console.log(`  Image CREF: ${imageUrl.slice(0, 80)}...`);
 
-    try {
-      const input = {
-        prompt: motionPrompt,
+    // ── Construction input selon mode single-shot ou multi-shot ───────────────
+    let input;
+
+    if (multiShot && multiShotPromptSets[i] && multiShotPromptSets[i].length > 1) {
+      // Multi-shot : jusqu'à 6 prompts de shots distincts sur 15s
+      const shots = multiShotPromptSets[i].slice(0, 6); // max 6 shots
+      console.log(`  Multi-shot: ${shots.length} shots × ~${(duration / shots.length).toFixed(1)}s`);
+      shots.forEach((s, j) => console.log(`    Shot ${j + 1}: ${s.slice(0, 60)}...`));
+
+      // Format multi_prompt : JSON stringifié ou tableau selon l'API Kling v3
+      input = {
+        multi_prompt: JSON.stringify(shots.map((prompt, j) => ({
+          shot_index: j + 1,
+          prompt,
+          duration: parseFloat((duration / shots.length).toFixed(2)),
+        }))),
         start_image: imageUrl,
         duration: duration,
+        mode: mode,
         aspect_ratio: aspectRatio,
         negative_prompt: negativePrompt,
         cfg_scale: 0.5,
       };
+    } else {
+      // Single-shot classique
+      console.log(`  Motion: ${motionPrompt.slice(0, 80)}...`);
+      input = {
+        prompt: motionPrompt,
+        start_image: imageUrl,
+        duration: duration,
+        mode: mode,
+        aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt,
+        cfg_scale: 0.5,
+      };
+    }
+
+    try {
 
       const output = await client.run(modelId, { input });
       const rawUrl = Array.isArray(output) ? output[0] : output;
@@ -236,10 +277,20 @@ async function main() {
         console.log(`  Ingest Shotstack (${shotstackEnv})...`);
         const cdnUrl = await ingestToShotstack(videoUrl, shotstackEnv);
         const finalUrl = cdnUrl || videoUrl;
-        videoUrls.push({ url: finalUrl, type: "video" });
+        const shotsCount = (multiShot && multiShotPromptSets[i])
+          ? multiShotPromptSets[i].slice(0, 6).length
+          : 1;
+        videoUrls.push({
+          url: finalUrl,
+          type: "video",
+          duration,
+          multiShot: shotsCount > 1,
+          shotsCount,
+          shotDuration: shotsCount > 1 ? parseFloat((duration / shotsCount).toFixed(2)) : duration,
+        });
 
         // Télécharger le clip en local
-        const filename = `scene-${i + 1}-${Date.now()}.mp4`;
+        const filename = `scene-${i + 1}${multiShot ? "-multishot" : ""}-${Date.now()}.mp4`;
         const dest = path.join(outputDir, filename);
         await downloadFile(videoUrl, dest);
         console.log(`  Saved: ${dest}`);
@@ -248,9 +299,9 @@ async function main() {
         videoUrls.push({ url: imageUrl, type: "image" });
       }
     } catch (err) {
-      console.error(`  ERROR Kling scène ${i + 1}: ${err.message}`);
+      console.error(`  ERROR Kling génération ${i + 1}: ${err.message}`);
       // Fallback image — Shotstack utilisera l'image avec Ken Burns
-      videoUrls.push({ url: imageUrl, type: "image" });
+      videoUrls.push({ url: imageUrl, type: "image", duration: 5, multiShot: false, shotsCount: 1, shotDuration: 5 });
     }
   }
 
