@@ -78,12 +78,12 @@ function buildPayload(mediaUrls, shotstackConfig, mediaType = "image") {
 
     const clip = {
       asset: isVideo
-        ? { type: "video", src: url, volume: 0 }
+        ? { type: "video", src: url }
         : { type: "image", src: url },
       start,
       length: clipDuration,
-      fit: isVideo ? "crop" : undefined,
-      transition: { in: transition, out: transition },
+      ...(isVideo ? {} : { fit: "cover" }),
+      transition: { in: "fade", out: "fade" },
     };
 
     if (!isVideo) {
