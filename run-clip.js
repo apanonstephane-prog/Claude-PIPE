@@ -29,12 +29,25 @@ const KLING_MODELS = {
   "kling-3.0":       "kwaivgi/kling-v3-video",
   "kling-v2.1":      "kwaivgi/kling-v2.1",
   "kling-v2.1-pro":  "kwaivgi/kling-v2.1-pro",
-  "kling-3.0-omni":  "kwaivgi/kling-v3-video",
+  "kling-3.0-omni":  "kwaivgi/kling-v3-omni-video",
 };
 
+// Modèles image utilisés pour générer la frame source avant animation Kling
+const IMAGE_MODELS = {
+  "nano-banana-pro": "google/nano-banana-pro",
+  "nano-banana-2":   "google/nano-banana-2",
+  "flux-dev":        "black-forest-labs/flux-dev",
+  "flux-schnell":    "black-forest-labs/flux-schnell",
+};
+
+// Modèles lipsync — par ordre de qualité décroissante pour un clip cinéma
+// sync/lipsync-2     : Sync Labs — meilleure qualité, studio-grade, peu d'effet IA
+// bytedance/latentsync : open-source haute qualité, bon fallback
+// devxpy/cog-wav2lip  : vieux, flou autour de la bouche — à éviter
 const LIPSYNC_MODELS = {
-  "latentsync": "bytedance/latentsync",
-  "wav2lip":    "devxpy/cog-wav2lip",
+  "sync-lipsync-2":  "sync/lipsync-2",             // Recommandé — Sync Labs
+  "latentsync":      "bytedance/latentsync",        // Fallback open-source
+  "wav2lip":         "devxpy/cog-wav2lip",          // Legacy, qualité faible
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -118,17 +131,108 @@ function saveMeta(metaPath, meta) {
   fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 }
 
+// ─── nano-banana-pro — génération de la frame source ──────────────────────────
+//
+// Workflow 2 étapes (MASTER-PROMPT §V — Superposition) :
+//   1. nano-banana-pro génère l'image de la scène (CREF = identité, prompt = situation)
+//   2. Kling anime cette image en start_image → Kling ne réinterprète JAMAIS
+//
+// Paramètre scene.crefImagePath : passé en reference_image à nano-banana-pro
+// Paramètre scene.imagePrompt   : prompt 7-couches pour l'image statique
+// Paramètre scene.imageModel    : modèle image (défaut: nano-banana-pro)
+
+async function generateSourceImage(client, scene, outputDir, sceneNum, dryRun) {
+  const imageModelKey = scene.imageModel || "nano-banana-pro";
+  const imageModelId  = IMAGE_MODELS[imageModelKey];
+  if (!imageModelId) {
+    console.warn(`  WARN: imageModel inconnu: ${imageModelKey} — skip génération image`);
+    return null;
+  }
+
+  const prompt = scene.imagePrompt;
+  if (!prompt) {
+    console.warn(`  WARN: imagePrompt absent pour scène ${sceneNum} — skip génération image`);
+    return null;
+  }
+
+  console.log(`  [IMAGE] ${imageModelKey} — génération de la frame source...`);
+  console.log(`  Prompt: ${prompt.slice(0, 100)}...`);
+
+  if (dryRun) {
+    console.log(`  [DRY RUN] Image skippée.`);
+    return null;
+  }
+
+  const isGoogleModel = imageModelKey === "nano-banana-pro" || imageModelKey === "nano-banana-2";
+
+  let input;
+  if (isGoogleModel) {
+    input = {
+      prompt,
+      aspect_ratio:        scene.aspectRatio || "16:9",
+      number_of_images:    1,
+      output_format:       "png",
+      safety_filter_level: "block_only_high",
+    };
+
+    // CREF : passer en tant qu'image de référence (jusqu'à 14 images pour nano-banana-pro)
+    if (scene.crefImagePath) {
+      const absPath = path.resolve(scene.crefImagePath);
+      if (fs.existsSync(absPath)) {
+        console.log(`  CREF → reference_image: ${scene.crefImagePath}`);
+        input.reference_image = fileToDataUri(absPath);
+      } else {
+        console.warn(`  WARN: CREF introuvable: ${absPath}`);
+      }
+    }
+
+    // CREFs supplémentaires si plusieurs images de référence
+    if (scene.crefImagePaths && Array.isArray(scene.crefImagePaths)) {
+      const refs = [];
+      for (const p of scene.crefImagePaths) {
+        const abs = path.resolve(p);
+        if (fs.existsSync(abs)) refs.push(fileToDataUri(abs));
+        else console.warn(`  WARN: CREF supplémentaire introuvable: ${abs}`);
+      }
+      if (refs.length > 0) input.reference_images = refs;
+    }
+  } else {
+    input = {
+      prompt,
+      num_outputs: 1,
+    };
+  }
+
+  const output = await client.run(imageModelId, { input });
+  const raw = Array.isArray(output) ? output[0] : output;
+  const imageUrl = resolveUrl(raw);
+
+  if (!imageUrl || !imageUrl.startsWith("http")) {
+    console.warn(`  WARN: URL image invalide — ${imageUrl}`);
+    return null;
+  }
+
+  // Télécharger l'image générée localement
+  const imageFile = path.join(outputDir, `frame-scene-${sceneNum}-${Date.now()}.png`);
+  await downloadFile(imageUrl, imageFile);
+  console.log(`  Frame source sauvegardée: ${imageFile}`);
+
+  return { imageUrl, localFile: imageFile };
+}
+
 // ─── Kling — génération vidéo ─────────────────────────────────────────────────
 
-async function generateKlingVideo(client, scene, klingConfig, dryRun) {
+// sourceImageUrl : URL de l'image générée par nano-banana-pro (étape 1).
+// Kling anime cette image → il ne réinterprète pas le personnage ou la scène.
+async function generateKlingVideo(client, scene, klingConfig, dryRun, sourceImageUrl = null) {
   const modelKey = scene.model || klingConfig.model || "kling-3.0";
   const modelId  = KLING_MODELS[modelKey] || KLING_MODELS["kling-3.0"];
   const duration  = scene.duration || klingConfig.duration || 5;
   const mode      = klingConfig.mode || "pro";
-  const aspect    = klingConfig.aspectRatio || "16:9";
+  const aspect    = scene.aspectRatio || klingConfig.aspectRatio || "16:9";
   const negPrompt = klingConfig.negativePrompt || "blurry, shaky, low quality, watermark";
 
-  console.log(`  Model: ${modelId} | ${duration}s | ${aspect}`);
+  console.log(`  [VIDEO] ${modelId} | ${duration}s | ${aspect}`);
 
   if (dryRun) {
     console.log(`  [DRY RUN] prompt: ${scene.prompt.slice(0, 80)}...`);
@@ -137,36 +241,64 @@ async function generateKlingVideo(client, scene, klingConfig, dryRun) {
 
   let input;
 
-  if (scene.crefImagePath) {
-    // Image-to-video — CREF local → data URI
+  if (sourceImageUrl) {
+    // Workflow 2-étapes MASTER-PROMPT §V :
+    // nano-banana-pro a construit la scène → Kling anime uniquement.
+    // motionPrompt = description du mouvement seulement (pas de la scène).
+    console.log(`  start_image: frame nano-banana-pro`);
+    input = {
+      prompt:          scene.motionPrompt || scene.prompt,
+      start_image:     sourceImageUrl,
+      duration,
+      mode,
+      aspect_ratio:    aspect,
+      negative_prompt: negPrompt,
+      cfg_scale:       0.5,
+    };
+  } else if (scene.crefImagePath) {
+    // Fallback : CREF local direct → start_image (scènes sans imagePrompt).
     const absPath = path.resolve(scene.crefImagePath);
     if (!fs.existsSync(absPath)) {
       console.warn(`  WARN: CREF introuvable: ${absPath} — bascule text-to-video`);
     } else {
-      console.log(`  CREF: ${scene.crefImagePath}`);
+      console.log(`  start_image (CREF local): ${scene.crefImagePath}`);
       const imageDataUri = fileToDataUri(absPath);
       input = {
-        prompt: scene.motionPrompt || scene.prompt,
-        start_image: imageDataUri,
+        prompt:          scene.motionPrompt || scene.prompt,
+        start_image:     imageDataUri,
         duration,
         mode,
-        aspect_ratio: aspect,
+        aspect_ratio:    aspect,
         negative_prompt: negPrompt,
-        cfg_scale: 0.5,
+        cfg_scale:       0.5,
       };
     }
   }
 
   if (!input) {
-    // Text-to-video pur
+    // Text-to-video pur : scènes sans personnage (insert, contexte, symbolique)
     input = {
-      prompt: scene.prompt,
+      prompt:          scene.prompt,
       duration,
       mode,
-      aspect_ratio: aspect,
+      aspect_ratio:    aspect,
       negative_prompt: negPrompt,
-      cfg_scale: 0.5,
+      cfg_scale:       0.5,
     };
+  }
+
+  // multi_shots : activé sur Kling 3.0 quand le prompt contient plusieurs shots.
+  // CRITIQUE : incompatible avec end_image — ne jamais combiner les deux.
+  const isKling3 = modelKey === "kling-3.0" || modelKey === "kling-3.0-omni";
+  const hasEndImage = !!input.end_image;
+  if (isKling3 && !hasEndImage) {
+    // multi_shots est activé si le prompt contient une structure de plans (SHOT/CUT TO/CLOSE ON)
+    // ou si scene.multiShots est explicitement défini
+    const promptHasShots = /SHOT\s+\d|CUT TO|CLOSE ON|OPENING/i.test(input.prompt || "");
+    input.multi_shots = scene.multiShots !== undefined ? !!scene.multiShots : promptHasShots;
+    if (input.multi_shots) {
+      console.log(`  multi_shots: true (${(input.prompt || "").split(/CUT TO|CLOSE ON|SHOT \d/i).length - 1 + 1} plans détectés)`);
+    }
   }
 
   const output = await client.run(modelId, { input });
@@ -174,42 +306,64 @@ async function generateKlingVideo(client, scene, klingConfig, dryRun) {
   return resolveUrl(raw);
 }
 
-// ─── LatentSync — lipsync ─────────────────────────────────────────────────────
+// ─── Lipsync — Sync Labs lipsync-2 (priorité) / LatentSync (fallback) ─────────
+//
+// Modèle recommandé : sync/lipsync-2 (Sync Labs)
+//   — studio-grade, minimal AI artefact, résultats les plus naturels
+// Fallback         : bytedance/latentsync (open-source, haute qualité)
+//
+// API Sync Labs : paramètres video_url + audio_url (URLs directes, pas data URI)
+// API LatentSync : paramètres video + audio (data URI ou URL)
 
 async function applyLipsync(client, videoUrl, audioFile, audioStart, audioDuration, lipsyncConfig, outputDir, sceneIdx, dryRun) {
-  const modelKey = lipsyncConfig.model || "latentsync";
-  const modelId  = LIPSYNC_MODELS[modelKey] || LIPSYNC_MODELS["latentsync"];
+  const modelKey = lipsyncConfig.model || "sync-lipsync-2";
+  const modelId  = LIPSYNC_MODELS[modelKey] || LIPSYNC_MODELS["sync-lipsync-2"];
+  const isSyncLabs = modelKey === "sync-lipsync-2";
 
-  if (!hasFfmpeg()) {
+  if (!isSyncLabs && !hasFfmpeg()) {
     console.warn(`  WARN: ffmpeg absent — lipsync ignoré pour scène ${sceneIdx}`);
     return videoUrl;
   }
 
   if (dryRun) {
-    console.log(`  [DRY RUN] LatentSync: audio ${audioStart}s → ${audioStart + audioDuration}s`);
+    console.log(`  [DRY RUN] Lipsync (${modelKey}): audio ${audioStart}s → ${audioStart + audioDuration}s`);
     return videoUrl;
   }
 
-  // Extraire le segment audio
-  const segPath = path.join(outputDir, `audio-seg-${sceneIdx}.mp3`);
-  const ok = extractAudioSegment(audioFile, audioStart, audioDuration, segPath);
-  if (!ok) {
-    console.warn(`  WARN: segment audio échoué — lipsync ignoré`);
-    return videoUrl;
-  }
+  console.log(`  Lipsync (${modelKey}): segment ${audioStart}s → ${audioStart + audioDuration}s`);
 
-  console.log(`  LatentSync: segment ${audioStart}s → ${audioStart + audioDuration}s`);
-  const audioDataUri = fileToDataUri(segPath);
+  let lipsyncInput;
 
-  const output = await client.run(modelId, {
-    input: {
-      video: videoUrl,
-      audio: audioDataUri,
-      inference_steps: lipsyncConfig.inferenceSteps || 25,
+  if (isSyncLabs) {
+    // Sync Labs API : video_url + audio_url directs. ffmpeg non requis.
+    // L'audio WAV complet est fourni avec start_time et end_time.
+    lipsyncInput = {
+      video_url:         videoUrl,
+      audio_url:         audioFile,
+      // Sync Labs supporte le découpage audio natif via start/end time
+      audio_start_time:  audioStart,
+      audio_end_time:    audioStart + audioDuration,
+      sync_mode:         "bounce",  // plus naturel qu'un simple cut
+      output_format:     "mp4",
+    };
+  } else {
+    // LatentSync API : data URI audio + video URL
+    const segPath = path.join(outputDir, `audio-seg-${sceneIdx}.mp3`);
+    const ok = extractAudioSegment(audioFile, audioStart, audioDuration, segPath);
+    if (!ok) {
+      console.warn(`  WARN: segment audio échoué — lipsync ignoré`);
+      return videoUrl;
+    }
+    const audioDataUri = fileToDataUri(segPath);
+    lipsyncInput = {
+      video:           videoUrl,
+      audio:           audioDataUri,
+      inference_steps: lipsyncConfig.inferenceSteps || 40,  // 40 = qualité optimale
       guidance_scale:  lipsyncConfig.guidanceScale  || 1.5,
-    },
-  });
+    };
+  }
 
+  const output = await client.run(modelId, { input: lipsyncInput });
   const raw = Array.isArray(output) ? output[0] : output;
   const lipsyncUrl = resolveUrl(raw);
 
@@ -278,18 +432,48 @@ async function main() {
 
     const sceneKey = `scene_${sceneNum}`;
 
-    // ── Étape 1 : Génération Kling ──────────────────────────────────────────
+    // ── Étape 1a : nano-banana-pro — génération de la frame source ──────────
+    // Uniquement si scene.imagePrompt est défini (scènes artiste avec CREF).
+    // La frame générée sera passée à Kling comme start_image — Kling anime, pas interprète.
     if (!onlyLipsync) {
+      let sourceImageUrl = null;
+
+      if (scene.imagePrompt && !meta[sceneKey]?.sourceImageUrl) {
+        try {
+          if (i > 0 && !dryRun) {
+            console.log(`  Rate limit image: attente 8s...`);
+            await sleep(8000);
+          }
+          const imgResult = await generateSourceImage(client, scene, outputDir, sceneNum, dryRun);
+          if (imgResult) {
+            sourceImageUrl = imgResult.imageUrl;
+            meta[sceneKey] = {
+              ...meta[sceneKey],
+              sourceImageUrl:      imgResult.imageUrl,
+              sourceImageLocalFile: imgResult.localFile,
+            };
+            saveMeta(metaPath, meta);
+          }
+        } catch (err) {
+          console.error(`  ERROR nano-banana-pro scène ${sceneNum}: ${err.message}`);
+          // Ne pas arrêter — Kling peut tomber sur le CREF local en fallback
+        }
+      } else if (meta[sceneKey]?.sourceImageUrl) {
+        sourceImageUrl = meta[sceneKey].sourceImageUrl;
+        console.log(`  [SKIP] Frame source déjà générée.`);
+      }
+
+      // ── Étape 1b : Kling — animation de la frame source ─────────────────
       if (meta[sceneKey]?.videoUrl) {
         console.log(`  [SKIP] Vidéo déjà générée: ${meta[sceneKey].videoUrl.slice(0, 70)}...`);
       } else {
         try {
-          if (i > 0 && !dryRun) {
-            console.log(`  Rate limit: attente 12s...`);
+          if (!dryRun) {
+            console.log(`  Rate limit vidéo: attente 12s...`);
             await sleep(12000);
           }
 
-          const videoUrl = await generateKlingVideo(client, scene, klingConfig, dryRun);
+          const videoUrl = await generateKlingVideo(client, scene, klingConfig, dryRun, sourceImageUrl);
 
           if (videoUrl) {
             console.log(`  Video: ${videoUrl.slice(0, 80)}...`);
@@ -298,12 +482,20 @@ async function main() {
               await downloadFile(videoUrl, dest);
               console.log(`  Saved: ${dest}`);
             }
-            meta[sceneKey] = { sceneNum, section: scene._section, type: scene._type, videoUrl, localFile: dest, lipsync: false };
+            meta[sceneKey] = {
+              ...meta[sceneKey],
+              sceneNum,
+              section:  scene._section,
+              type:     scene._type,
+              videoUrl,
+              localFile: dest,
+              lipsync:  false,
+            };
             saveMeta(metaPath, meta);
           }
         } catch (err) {
           console.error(`  ERROR Kling scène ${sceneNum}: ${err.message}`);
-          meta[sceneKey] = { sceneNum, error: err.message };
+          meta[sceneKey] = { ...(meta[sceneKey] || {}), sceneNum, error: err.message };
           saveMeta(metaPath, meta);
           continue;
         }
